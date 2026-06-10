@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 216 100% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 216 100% 27%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 { @apply font-semibold tracking-tight; }
+}
+
+@layer components {
+  /* Sidebar styles */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           text-sidebar-text transition-all duration-150 cursor-pointer
+           hover:bg-sidebar-hover hover:text-sidebar-textActive;
+  }
+  .sidebar-item.active {
+    @apply bg-sidebar-active text-sidebar-textActive;
+  }
+
+  /* Status badges */
+  .badge-green { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-successBg text-capelli-success; }
+  .badge-yellow { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-warningBg text-capelli-warning; }
+  .badge-red { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-dangerBg text-capelli-danger; }
+  .badge-blue { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-infoBg text-capelli-info; }
+  .badge-purple { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-purpleBg text-capelli-purple; }
+
+  /* Risk banners */
+  .banner-info { @apply bg-capelli-infoBg border border-blue-200 text-capelli-info rounded-lg p-3; }
+  .banner-warning { @apply bg-capelli-warningBg border border-yellow-200 text-capelli-warning rounded-lg p-3; }
+  .banner-danger { @apply bg-capelli-dangerBg border border-red-200 text-capelli-danger rounded-lg p-3; }
+  .banner-success { @apply bg-capelli-successBg border border-green-200 text-capelli-success rounded-lg p-3; }
+
+  /* Ticket coach specific */
+  .coach-step { @apply border border-gray-200 rounded-xl bg-white shadow-card; }
+  .coach-step-header { @apply flex items-center gap-3 p-4 border-b border-gray-100; }
+  .coach-checklist-item { @apply flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors; }
+
+  /* Scrollbar */
+  .custom-scroll::-webkit-scrollbar { width: 6px; }
+  .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+  .custom-scroll::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+  .custom-scroll::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+
+  /* Loading shimmer */
+  .shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  .sidebar { display: none !important; }
+  body { background: white; }
+}

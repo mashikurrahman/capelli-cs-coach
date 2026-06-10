@@ -1,0 +1,615 @@
+// Capelli Sports CS Workflow Coach — Database Schema
+// PostgreSQL + pgvector required
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ─── USERS & ROLES ────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(AGENT)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  avatarInitials String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions        TicketSession[]
+  qaReviews       QaReview[]
+  auditLogs       AuditLog[]
+  quizAttempts    QuizAttempt[]
+  uploadedDocs    Document[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  TEAM_LEADER
+  TRAINER
+  AGENT
+  QA
+}
+
+// ─── DOCUMENTS & KNOWLEDGE BASE ───────────────────────────────────────────────
+
+model Document {
+  id           String         @id @default(cuid())
+  title        String
+  fileName     String
+  fileType     FileType
+  filePath     String
+  fileSize     Int
+  pageCount    Int?
+  status       DocStatus      @default(PROCESSING)
+  isSensitive  Boolean        @default(false)
+  category     DocCategory    @default(GENERAL)
+  uploadedById String
+  uploadedBy   User           @relation(fields: [uploadedById], references: [id])
+  version      Int            @default(1)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  chunks       DocumentChunk[]
+
+  @@map("documents")
+}
+
+enum FileType {
+  PDF
+  DOCX
+  XLSX
+  CSV
+  TXT
+  OTHER
+}
+
+enum DocStatus {
+  PROCESSING
+  PROCESSED
+  FAILED
+  ARCHIVED
+}
+
+enum DocCategory {
+  TRAINING_MANUAL
+  SOP
+  EMAIL_TEMPLATE
+  ZENDESK_TAGS
+  CONTACTS
+  CLUBS_PASSWORDS
+  PRODUCT_GUIDE
+  POLICY
+  PRACTICE_QUESTIONS
+  CHEAT_SHEET
+  GENERAL
+}
+
+model DocumentChunk {
+  id             String    @id @default(cuid())
+  documentId     String
+  document       Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex     Int
+  content        String
+  pageNumber     Int?
+  sectionHeading String?
+  topic          String?
+  embedding      Unsupported("vector(768)")?
+  tokenCount     Int?
+  isSensitive    Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  @@index([documentId])
+  @@map("document_chunks")
+}
+
+// ─── WORKFLOWS ────────────────────────────────────────────────────────────────
+
+model Workflow {
+  id               String        @id @default(cuid())
+  workflowId       String        @unique
+  name             String
+  category         IssueCategory
+  triggerPhrases   String[]
+  whenToUse        String[]
+  doNotUseWhen     String[]
+  requiredInfo     String[]
+  systemChecks     SystemCheck[]
+  status           WorkflowStatus @default(DRAFT)
+  version          Int           @default(1)
+  isBuiltIn        Boolean       @default(false)
+  sortOrder        Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  steps            WorkflowStep[]
+  templates        Template[]
+  zendeskTags      ZendeskTag[]
+  escalationRules  EscalationRule[]
+  commonMistakes   CommonMistake[]
+  sourceRefs       SourceReference[]
+  sessions         TicketSession[]
+
+  @@map("workflows")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+enum IssueCategory {
+  RETURN_EXCHANGE
+  REPLACEMENT_ORDER
+  DAMAGED_DEFECTIVE
+  WRONG_ITEM_RECEIVED
+  MISSING_ITEM
+  CUSTOMER_WRONG_SIZE
+  CUSTOMIZED_ITEM_RETURN
+  ORDER_STATUS_ETA
+  PROCESSING_TIME
+  EXPEDITED_SHIPPING
+  TRACKING_NOT_MOVING
+  FBB_TRACKING
+  PARTIAL_SHIPMENT
+  OUT_OF_STOCK
+  ORDER_CHANGE
+  ORDER_CANCELLATION
+  OBD_WAVE
+  FBPA_CANCELLATION
+  FBB_CHANGE_CANCELLATION
+  TEAM_STORE_PASSWORD
+  PLAYER_LINK
+  GUEST_CHECKOUT
+  INDIVIDUAL_ITEM_ORDERING
+  TWO_PLAYERS_ONE_ACCOUNT
+  SIZE_HELP
+  PRODUCT_TECHNICAL
+  WEBSITE_ISSUE
+  REFUND_REQUEST
+  PRIVATE_CONTACT_INFO
+  ESCALATION
+  GENERAL_INQUIRY
+}
+
+enum SystemCheck {
+  ZENDESK
+  BIGCOMMERCE
+  SHOPIFY
+  SAP
+  TEAM_STORE
+  CONTACT_SHEET
+  PRODUCT_DIRECTORY
+  ZENDESK_TAGS_SHEET
+}
+
+model WorkflowStep {
+  id           String   @id @default(cuid())
+  workflowId   String
+  workflow     Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepNumber   Int
+  title        String
+  description  String
+  agentAction  String?
+  warning      String?
+  isRequired   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@unique([workflowId, stepNumber])
+  @@map("workflow_steps")
+}
+
+model CommonMistake {
+  id         String   @id @default(cuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  mistake    String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@map("common_mistakes")
+}
+
+model EscalationRule {
+  id            String   @id @default(cuid())
+  workflowId    String?
+  workflow      Workflow? @relation(fields: [workflowId], references: [id])
+  triggerReason String
+  escalateTo    String?
+  details       String
+  isGlobal      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@map("escalation_rules")
+}
+
+model SourceReference {
+  id             String   @id @default(cuid())
+  workflowId     String?
+  workflow       Workflow? @relation(fields: [workflowId], references: [id])
+  documentName   String
+  sectionName    String?
+  pageNumber     Int?
+  relevantRule   String
+  confidence     Confidence @default(MEDIUM)
+  createdAt      DateTime @default(now())
+
+  @@map("source_references")
+}
+
+enum Confidence {
+  HIGH
+  MEDIUM
+  LOW
+  UNVERIFIED
+}
+
+// ─── TEMPLATES ────────────────────────────────────────────────────────────────
+
+model Template {
+  id           String        @id @default(cuid())
+  workflowId   String?
+  workflow     Workflow?     @relation(fields: [workflowId], references: [id])
+  name         String
+  type         TemplateType
+  subject      String?
+  body         String
+  placeholders String[]
+  status       WorkflowStatus @default(DRAFT)
+  version      Int           @default(1)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("templates")
+}
+
+enum TemplateType {
+  CUSTOMER_EMAIL
+  INTERNAL_NOTE
+  ESCALATION_MESSAGE
+  FOLLOW_UP_EMAIL
+}
+
+// ─── ZENDESK TAGS ─────────────────────────────────────────────────────────────
+
+model ZendeskTag {
+  id           String     @id @default(cuid())
+  workflowId   String?
+  workflow     Workflow?  @relation(fields: [workflowId], references: [id])
+  tagName      String
+  tagCategory  TagCategory
+  description  String?
+  isRequired   Boolean    @default(false)
+  isApproved   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@map("zendesk_tags")
+}
+
+enum TagCategory {
+  PRIMARY_CATEGORY
+  ISSUE_TYPE
+  SUB_ISSUE
+  ORDER_STATUS
+  ACTION_TAKEN
+  PENDING_REASON
+  ESCALATION
+  FOLLOW_UP
+  SOLVED_REASON
+  CLUB_TEAM
+}
+
+// ─── CONTACTS ─────────────────────────────────────────────────────────────────
+
+model Contact {
+  id           String      @id @default(cuid())
+  name         String
+  role         String
+  department   String?
+  email        String?
+  phone        String?
+  notes        String?
+  isSensitive  Boolean     @default(true)
+  visibleTo    UserRole[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("contacts")
+}
+
+// ─── CLUBS / TEAM STORES ──────────────────────────────────────────────────────
+
+model Club {
+  id           String   @id @default(cuid())
+  name         String
+  storeUrl     String?
+  password     String?
+  notes        String?
+  isActive     Boolean  @default(true)
+  isSensitive  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("clubs")
+}
+
+// ─── TICKET SESSIONS ──────────────────────────────────────────────────────────
+
+model TicketSession {
+  id               String         @id @default(cuid())
+  agentId          String
+  agent            User           @relation(fields: [agentId], references: [id])
+  workflowId       String?
+  workflow         Workflow?      @relation(fields: [workflowId], references: [id])
+  rawComplaint     String
+  redactedComplaint String?
+  customerName     String?
+  customerEmail    String?
+  orderNumber      String?
+  clubTeamName     String?
+  agentNotes       String?
+  channel          TicketChannel  @default(ZENDESK)
+  primaryIssue     IssueCategory?
+  secondaryIssues  IssueCategory[]
+  confidenceScore  Int?
+  riskLevel        RiskLevel?
+  status           SessionStatus  @default(IN_PROGRESS)
+  currentStep      Int            @default(1)
+  completedSteps   Int[]
+  analysisResult   Json?
+  generatedEmailId String?
+  generatedNoteId  String?
+  completedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  checklistResults ChecklistResult[]
+  generatedEmails  GeneratedEmail[]
+  internalNotes    InternalNote[]
+  qaReviews        QaReview[]
+  unresolvedQueries UnresolvedQuery[]
+
+  @@map("ticket_sessions")
+}
+
+enum TicketChannel {
+  ZENDESK
+  EMAIL
+  PHONE
+  CHAT
+  OTHER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  ESCALATED
+  QA_PENDING
+}
+
+// ─── GENERATED EMAILS ─────────────────────────────────────────────────────────
+
+model GeneratedEmail {
+  id          String        @id @default(cuid())
+  sessionId   String
+  session     TicketSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  subject     String?
+  body        String
+  mode        EmailMode     @default(SHORT_PROFESSIONAL)
+  wasCopied   Boolean       @default(false)
+  copiedAt    DateTime?
+  wasEdited   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  @@map("generated_emails")
+}
+
+enum EmailMode {
+  SHORT_PROFESSIONAL
+  DETAILED_PROFESSIONAL
+  APOLOGY_HEAVY
+  FOLLOW_UP
+  FINAL_RESPONSE
+  ESCALATION_HOLDING
+}
+
+// ─── INTERNAL NOTES ───────────────────────────────────────────────────────────
+
+model InternalNote {
+  id          String        @id @default(cuid())
+  sessionId   String
+  session     TicketSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  body        String
+  wasCopied   Boolean       @default(false)
+  wasEdited   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  @@map("internal_notes")
+}
+
+// ─── CHECKLIST RESULTS ────────────────────────────────────────────────────────
+
+model ChecklistResult {
+  id          String        @id @default(cuid())
+  sessionId   String
+  session     TicketSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  checkKey    String
+  checkLabel  String
+  isRequired  Boolean
+  isChecked   Boolean       @default(false)
+  isNA        Boolean       @default(false)
+  checkedAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@map("checklist_results")
+}
+
+// ─── QA REVIEWS ───────────────────────────────────────────────────────────────
+
+model QaReview {
+  id                  String        @id @default(cuid())
+  sessionId           String
+  session             TicketSession @relation(fields: [sessionId], references: [id])
+  reviewerId          String
+  reviewer            User          @relation(fields: [reviewerId], references: [id])
+  accuracyScore       Int
+  policyScore         Int
+  toneScore           Int
+  completenessScore   Int
+  zendeskScore        Int
+  overallScore        Int
+  riskLevel           RiskLevel     @default(LOW)
+  notes               String?
+  issues              String[]
+  status              ReviewStatus  @default(PENDING)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@map("qa_reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  NEEDS_REVISION
+  FLAGGED
+}
+
+// ─── TRAINING SCENARIOS ───────────────────────────────────────────────────────
+
+model TrainingScenario {
+  id              String         @id @default(cuid())
+  title           String
+  category        IssueCategory
+  difficulty      Difficulty     @default(BEGINNER)
+  complaint       String
+  correctWorkflow String
+  hints           String[]
+  explanation     String?
+  isPublished     Boolean        @default(false)
+  sortOrder       Int            @default(0)
+  createdAt       DateTime       @default(now())
+
+  quizQuestions   QuizQuestion[]
+  attempts        QuizAttempt[]
+
+  @@map("training_scenarios")
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model QuizQuestion {
+  id           String           @id @default(cuid())
+  scenarioId   String?
+  scenario     TrainingScenario? @relation(fields: [scenarioId], references: [id])
+  question     String
+  options      String[]
+  correctIndex Int
+  explanation  String?
+  category     IssueCategory?
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+
+  attempts     QuizAttempt[]
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  scenarioId   String?
+  scenario     TrainingScenario? @relation(fields: [scenarioId], references: [id])
+  questionId   String?
+  question     QuizQuestion?    @relation(fields: [questionId], references: [id])
+  answer       Int
+  isCorrect    Boolean
+  timeTakenMs  Int?
+  createdAt    DateTime         @default(now())
+
+  @@map("quiz_attempts")
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@map("audit_logs")
+}
+
+// ─── UNRESOLVED QUERIES ───────────────────────────────────────────────────────
+
+model UnresolvedQuery {
+  id          String        @id @default(cuid())
+  sessionId   String?
+  session     TicketSession? @relation(fields: [sessionId], references: [id])
+  query       String
+  category    IssueCategory?
+  wasReviewed Boolean       @default(false)
+  resolution  String?
+  createdAt   DateTime      @default(now())
+
+  @@map("unresolved_queries")
+}
+
+// ─── ADMIN UPDATES ────────────────────────────────────────────────────────────
+
+model AdminUpdate {
+  id          String    @id @default(cuid())
+  title       String
+  message     String
+  isActive    Boolean   @default(true)
+  visibleTo   UserRole[]
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  @@map("admin_updates")
+}
+
+// ─── APP SETTINGS ─────────────────────────────────────────────────────────────
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String?
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}
