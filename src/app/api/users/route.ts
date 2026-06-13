@@ -59,7 +59,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = createSchema.parse(body);
 
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    const existing = await prisma.user.findFirst({
+      where: { email: { equals: data.email, mode: 'insensitive' } },
+    });
     if (existing) return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
 
     const hashed = await bcrypt.hash(data.password, 12);

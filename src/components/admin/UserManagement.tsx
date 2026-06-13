@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import {
-  Users, Plus, Search, UserCheck, UserX, Shield, Edit2, X
+  Users, Plus, Search, UserCheck, UserX, Shield, Edit2, X, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,13 +57,32 @@ async function fetchUsers(q: string) {
 export default function UserManagement() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { data: authSession } = useSession();
+  const myId = (authSession?.user as { id?: string })?.id;
   const [q, setQ] = useState('');
   const [dQ, setDQ] = useState('');
   const [creating, setCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
 
   const { data, isLoading } = useQuery({ queryKey: ['users', dQ], queryFn: () => fetchUsers(dQ) });
   const users: any[] = data?.users ?? [];
+
+  // Rows the current admin is allowed to bulk-select (everyone but themselves).
+  const selectableIds = users.filter(u => u.id !== myId).map(u => u.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id));
+
+  function toggleOne(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(selectableIds));
+  }
 
   function handleSearch(val: string) {
     setQ(val);
@@ -120,6 +140,26 @@ export default function UserManagement() {
     onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/users/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      return res.json() as Promise<{ deleted: number; deactivated: number }>;
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      setSelectedIds(new Set());
+      setConfirmBulk(false);
+      const parts = [r.deleted ? `${r.deleted} deleted` : '', r.deactivated ? `${r.deactivated} deactivated` : ''].filter(Boolean);
+      toast({ title: `Done — ${parts.join(', ') || 'no changes'}`, variant: 'success' });
+    },
+    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
     defaultValues: { role: 'AGENT' },
@@ -163,8 +203,32 @@ export default function UserManagement() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-card overflow-hidden">
-        <div className="p-4 border-b border-gray-100">
-          <p className="text-sm font-semibold text-gray-700">{users.length} users</p>
+        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+          <input
+            type="checkbox"
+            aria-label="Select all users"
+            checked={allSelected}
+            onChange={toggleAll}
+            disabled={selectableIds.length === 0}
+            className="h-4 w-4 rounded border-gray-300 text-capelli-navy focus:ring-capelli-navy"
+          />
+          {selectedIds.size > 0 ? (
+            <div className="flex items-center justify-between flex-1">
+              <p className="text-sm font-medium text-gray-700">{selectedIds.size} selected</p>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+                <Button
+                  size="sm"
+                  onClick={() => setConfirmBulk(true)}
+                  className="gap-1.5 bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete selected
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-gray-700">{users.length} users</p>
+          )}
         </div>
         {isLoading ? (
           <div className="p-6 space-y-3">
@@ -173,7 +237,16 @@ export default function UserManagement() {
         ) : (
           <div className="divide-y divide-gray-100">
             {users.map(u => (
-              <div key={u.id} className="px-5 py-3.5 flex items-center gap-3">
+              <div key={u.id} className={cn('px-5 py-3.5 flex items-center gap-3', selectedIds.has(u.id) && 'bg-blue-50/50')}>
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${u.name}`}
+                  checked={selectedIds.has(u.id)}
+                  onChange={() => toggleOne(u.id)}
+                  disabled={u.id === myId}
+                  title={u.id === myId ? "You can't select your own account" : undefined}
+                  className="h-4 w-4 rounded border-gray-300 text-capelli-navy focus:ring-capelli-navy disabled:opacity-30"
+                />
                 <div className="w-9 h-9 rounded-full bg-capelli-navy flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-white">
                     {u.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2)}
@@ -291,6 +364,32 @@ export default function UserManagement() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk delete confirmation */}
+      <Dialog open={confirmBulk} onOpenChange={setConfirmBulk}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {selectedIds.size} user{selectedIds.size === 1 ? '' : 's'}?</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <p className="text-sm text-gray-600">
+              This removes their access immediately. Users with no activity are permanently
+              deleted; users with history (tickets, logins) are deactivated to preserve records.
+            </p>
+            <div className="flex gap-3 pt-1">
+              <Button type="button" variant="outline" onClick={() => setConfirmBulk(false)} className="flex-1">Cancel</Button>
+              <Button
+                type="button"
+                onClick={() => bulkDelete.mutate(Array.from(selectedIds))}
+                disabled={bulkDelete.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {bulkDelete.isPending ? 'Deleting…' : `Delete ${selectedIds.size}`}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
