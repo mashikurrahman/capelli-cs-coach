@@ -1,11 +1,14 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
 import DashboardHome from '@/components/dashboard/DashboardHome';
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const userId = (session!.user as { id: string }).id;
-  const role = (session!.user as { role: string }).role;
+  if (!session?.user) redirect('/login');
+  const user = session.user as { id: string; role: string; name: string };
+  const userId = user.id;
+  const role = user.role;
 
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -38,7 +41,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardHome
-      userName={(session!.user as { name: string }).name}
+      userName={user.name}
       role={role}
       stats={{
         totalSessions,

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import AdminOverview from '@/components/admin/AdminOverview';
 import { getSession } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
@@ -6,7 +7,8 @@ export const metadata = { title: 'Admin — Capelli CS Coach' };
 
 export default async function AdminPage() {
   const session = await getSession();
-  const role = (session!.user as any).role;
+  if (!session?.user) redirect('/login');
+  const role = (session.user as any).role;
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [users, docs, sessions, unresolved, recentLogs] = await Promise.all([
