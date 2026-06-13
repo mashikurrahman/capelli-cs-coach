@@ -1,11 +1,14 @@
-import { gemini, EMBEDDING_MODEL } from './client';
+import { Prisma } from '@prisma/client';
+import { embedText, embedTexts } from './client';
 import { prisma } from '@/lib/db/prisma';
 import type { KBSearchResult } from '@/types';
 
 export async function embed(text: string): Promise<number[]> {
-  const model = gemini.getGenerativeModel({ model: EMBEDDING_MODEL });
-  const result = await model.embedContent(text.replace(/\n+/g, ' ').slice(0, 8000));
-  return result.embedding.values;
+  return embedText(text);
+}
+
+export async function embedMany(texts: string[]): Promise<number[][]> {
+  return embedTexts(texts);
 }
 
 export async function storeEmbedding(chunkId: string, embedding: number[]): Promise<void> {
@@ -31,6 +34,9 @@ export async function semanticSearch(
   }
 
   const vec = `[${queryEmbedding.join(',')}]`;
+  const sensitiveFilter = excludeSensitive
+    ? Prisma.sql`AND dc."isSensitive" = false`
+    : Prisma.empty;
 
   try {
     const rows = await prisma.$queryRaw<Array<{
@@ -58,7 +64,7 @@ export async function semanticSearch(
       JOIN documents d ON d.id = dc."documentId"
       WHERE d.status = 'PROCESSED'
         AND dc.embedding IS NOT NULL
-        ${excludeSensitive ? prisma.$queryRaw`AND dc."isSensitive" = false` : prisma.$queryRaw``}
+        ${sensitiveFilter}
         AND 1 - (dc.embedding <=> ${vec}::vector) > ${minScore}
       ORDER BY similarity DESC
       LIMIT ${topK}
@@ -76,7 +82,6 @@ export async function semanticSearch(
       isSensitive: r.is_sensitive,
     }));
   } catch {
-    // pgvector not available — fallback to keyword search
     return keywordSearch(query, topK);
   }
 }
@@ -108,14 +113,17 @@ async function keywordSearch(query: string, topK: number): Promise<KBSearchResul
   }));
 }
 
-export function buildContext(results: KBSearchResult[]): string {
+export function buildContext(results: KBSearchResult[], maxCharsPerChunk = 550): string {
   if (results.length === 0) return '';
   return results.map((r, i) => {
     const loc = [
       r.documentTitle,
-      r.sectionHeading && `§ ${r.sectionHeading}`,
+      r.sectionHeading && `Section ${r.sectionHeading}`,
       r.pageNumber && `p.${r.pageNumber}`,
-    ].filter(Boolean).join(' › ');
-    return `[Source ${i + 1}: ${loc}]\n${r.content}`;
+    ].filter(Boolean).join(' > ');
+    const content = r.content.length > maxCharsPerChunk
+      ? r.content.slice(0, maxCharsPerChunk).trimEnd() + '…'
+      : r.content;
+    return `[Source ${i + 1}: ${loc}]\n${content}`;
   }).join('\n\n---\n\n');
 }

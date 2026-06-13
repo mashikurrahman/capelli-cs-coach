@@ -21,15 +21,11 @@ export async function GET(req: NextRequest) {
     const updates = await prisma.adminUpdate.findMany({
       where: {
         isActive: true,
-        OR: [
-          { visibleTo: { isEmpty: true } },
-          { visibleTo: { has: role } },
+        AND: [
+          { OR: [{ visibleTo: { isEmpty: true } }, { visibleTo: { has: role } }] },
+          { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
         ],
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ] as any,
-      },
+      } as any,
       orderBy: { createdAt: 'desc' },
       take: 10,
     });

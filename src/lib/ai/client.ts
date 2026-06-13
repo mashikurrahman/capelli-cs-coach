@@ -1,13 +1,14 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+export {
+  embedText,
+  embedTexts,
+  generateJson,
+  generateText,
+  getChatModel,
+  getEmbeddingModel,
+  resolveChatProvider,
+  resolveEmbeddingProvider,
+} from './providers';
 
-const globalForGemini = globalThis as unknown as { gemini: GoogleGenerativeAI };
-
-export const gemini =
-  globalForGemini.gemini ||
-  new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-if (process.env.NODE_ENV !== 'production') globalForGemini.gemini = gemini;
-
-export const MODEL = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
-export const EMBEDDING_MODEL = 'text-embedding-004';
+export const CHAT_MODEL = process.env.AI_CHAT_MODEL;
+export const EMBEDDING_MODEL = process.env.AI_EMBEDDING_MODEL;
 export const EMBEDDING_DIM = 768;

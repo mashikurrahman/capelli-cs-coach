@@ -8,7 +8,8 @@ Internal web application for the Capelli Sports Customer Service team. A RAG-pow
 
 - **Node.js** 18.x or later
 - **PostgreSQL** 15+ with the **pgvector** extension
-- **OpenAI API key** (GPT-4o access required)
+- **Groq API key** for ticket analysis
+- **Cloudflare API token + account ID** for embeddings
 
 ---
 
@@ -36,9 +37,13 @@ Edit `.env`:
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/capelli_cs_coach"
 NEXTAUTH_SECRET="your-secret-here-min-32-chars"
 NEXTAUTH_URL="http://localhost:3000"
-OPENAI_API_KEY="sk-..."
-OPENAI_MODEL="gpt-4o"
-OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+AI_CHAT_PROVIDER="groq"
+AI_CHAT_MODEL="llama-3.1-8b-instant"
+GROQ_API_KEY="gsk_..."
+AI_EMBEDDING_PROVIDER="cloudflare"
+AI_EMBEDDING_MODEL="@cf/baai/bge-base-en-v1.5"
+CLOUDFLARE_ACCOUNT_ID="your-account-id"
+CLOUDFLARE_API_TOKEN="your-api-token"
 UPLOAD_DIR="./uploads"
 MAX_FILE_SIZE="52428800"
 ```
@@ -90,11 +95,11 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Role         | Email                          | Password      |
 |--------------|-------------------------------|---------------|
-| Admin        | admin@capellisports.com        | Admin123!     |
-| Team Leader  | teamlead@capellisports.com     | Leader123!    |
-| Trainer      | trainer@capellisports.com      | Trainer123!   |
-| Agent        | agent@capellisports.com        | Agent123!     |
-| QA           | qa@capellisports.com           | QA1234567!    |
+| Admin        | admin@capelliCS.com        | Admin123!     |
+| Team Leader  | teamlead@capelliCS.com     | Leader123!    |
+| Trainer      | trainer@capelliCS.com      | Trainer123!   |
+| Agent        | agent@capelliCS.com        | Agent123!     |
+| QA           | qa@capelliCS.com           | QA1234567!    |
 
 > **Change all passwords immediately in a real deployment.**
 
@@ -103,7 +108,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ## First Steps After Setup
 
 1. **Log in as Admin**
-2. Go to **Admin › Upload Docs**
+2. Go to **Admin > Upload Docs**
 3. Upload Capelli training materials (PDF, DOCX, XLSX, CSV, TXT)
 4. The system will chunk and embed each document automatically
 5. Once documents are uploaded, go to **Ticket Coach** and analyze a ticket
@@ -154,7 +159,7 @@ src/
 │   ├── layout/                — Sidebar, Header
 │   └── ui/                    — Button, Card, Badge, etc.
 ├── lib/
-│   ├── ai/                    — OpenAI client, embeddings, prompts, ticket analyzer, doc processor
+│   ├── ai/                    — AI provider layer, embeddings, prompts, ticket analyzer, doc processor
 │   ├── auth/                  — NextAuth config + role utils
 │   ├── db/                    — Prisma singleton
 │   ├── utils/                 — cn(), helpers, PII redaction
@@ -169,7 +174,7 @@ src/
 - **9-Step Ticket Coach**: Issue Detection → Missing Info → System Checks → Workflow Steps → Email Draft → Internal Note → Zendesk Assist → Pre-Send Checklist → Completion
 - **RAG-Powered**: All guidance sourced from uploaded training documents via pgvector semantic search
 - **Pre-Send Gate**: Email copy button locked until all required checklist items are confirmed
-- **PII Redaction**: Customer emails, phones, order numbers redacted before sending to OpenAI
+- **PII Redaction**: Customer emails, phones, order numbers redacted before sending to the AI provider
 - **Audit Logging**: Every login, email copy, password view, and admin change is logged
 - **Role-Based Access**: Admin, Team Leader, Trainer, Agent, QA with appropriate permissions
 - **30 Built-In Workflows**: All Capelli CS workflows pre-loaded and ready to use

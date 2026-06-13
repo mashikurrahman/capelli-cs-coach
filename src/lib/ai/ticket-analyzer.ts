@@ -1,4 +1,4 @@
-import { gemini, MODEL } from './client';
+import { generateJson, getChatModel } from './client';
 import { semanticSearch, buildContext } from './embeddings';
 import { buildAnalysisPrompt } from './prompts';
 import { redactPII } from '@/lib/utils/helpers';
@@ -12,37 +12,25 @@ export async function analyzeTicket(input: TicketInput): Promise<AnalysisResult>
     input.orderNumber && `order ${input.orderNumber}`,
   ].filter(Boolean).join(' ');
 
-  // Retrieve relevant training material via RAG
-  const chunks = await semanticSearch(searchQuery, 10, 0.25);
-  const context = buildContext(chunks);
+  // Retrieve relevant training material via RAG.
+  // Keep this lean: too much context blows past free-tier token limits
+  // (Groq counts input + maxOutputTokens against its per-minute cap).
+  const chunks = await semanticSearch(searchQuery, 6, 0.3);
+  const context = buildContext(chunks, 550);
 
   // Redact PII before sending to AI
   const safeInput: TicketInput = {
     ...input,
     complaint: redactPII(input.complaint),
-    customerEmail: undefined,
   };
 
   const prompt = buildAnalysisPrompt(safeInput, context);
-
-  const model = gemini.getGenerativeModel({
-    model: MODEL,
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.15,
-      maxOutputTokens: 4096,
-    } as any,
+  const parsed = await generateJson<AnalysisResult>({
+    prompt,
+    model: getChatModel(),
+    temperature: 0.15,
+    maxOutputTokens: 4096,
   });
-  const completion = await model.generateContent(prompt);
-  const raw = completion.response.text();
-  if (!raw) throw new Error('No response from AI');
-
-  let parsed: AnalysisResult;
-  try {
-    parsed = JSON.parse(raw) as AnalysisResult;
-  } catch {
-    throw new Error('Failed to parse AI analysis response');
-  }
 
   // If no source references were generated but we have context, add them
   if ((!parsed.source_references || parsed.source_references.length === 0) && chunks.length > 0) {
@@ -64,7 +52,7 @@ export async function analyzeTicket(input: TicketInput): Promise<AnalysisResult>
         document_name: 'No training documents uploaded',
         section: 'N/A',
         page_number: null,
-        relevant_rule: 'Upload training materials in the Admin › Upload Center to enable evidence-based guidance.',
+        relevant_rule: 'Upload training materials in the Admin > Upload Center to enable evidence-based guidance.',
         confidence: 'UNVERIFIED',
       }];
     }

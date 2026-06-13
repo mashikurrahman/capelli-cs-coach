@@ -1,81 +1,113 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 220 25% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 216 100% 27%;
+    --primary: 222 78% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 91%;
+    --secondary: 220 16% 94%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
+    --muted: 220 16% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 94%;
+    --accent: 222 70% 96%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 216 100% 27%;
-    --radius: 0.5rem;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 222 78% 45%;
+    --radius: 0.75rem;
   }
 }
 
 @layer base {
   * { @apply border-border; }
+  html { @apply scroll-smooth; }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-slate-50 text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+      linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, auto, 56px 56px, 56px 56px;
+    background-position: 0 0, 0 0, 0 0, center, center;
+    background-attachment: fixed;
   }
-  h1, h2, h3, h4, h5, h6 { @apply font-semibold tracking-tight; }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 18%);
+    z-index: -1;
+  }
+  ::selection {
+    background: rgba(0, 48, 135, 0.14);
+    color: hsl(var(--foreground));
+  }
+  h1, h2, h3, h4, h5, h6 { @apply font-heading font-semibold tracking-tight text-slate-900; }
 }
 
 @layer components {
+  .surface-panel {
+    @apply rounded-xl border border-white/80 bg-white/70 shadow-card backdrop-blur-2xl;
+  }
+
+  .surface-panel-hover {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-card-hover hover:border-white;
+  }
+
+  .surface-muted {
+    @apply rounded-xl border border-slate-200/50 bg-slate-50/60 backdrop-blur-md;
+  }
+
   /* Sidebar styles */
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-           text-sidebar-text transition-all duration-150 cursor-pointer
-           hover:bg-sidebar-hover hover:text-sidebar-textActive;
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
+           text-slate-400 transition-all duration-300 ease-out cursor-pointer
+           hover:bg-white/10 hover:text-white hover:translate-x-1;
   }
   .sidebar-item.active {
-    @apply bg-sidebar-active text-sidebar-textActive;
+    @apply bg-blue-500/15 text-blue-50 border border-blue-400/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_15px_rgba(59,130,246,0.15)];
   }
 
   /* Status badges */
-  .badge-green { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-successBg text-capelli-success; }
-  .badge-yellow { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-warningBg text-capelli-warning; }
-  .badge-red { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-dangerBg text-capelli-danger; }
-  .badge-blue { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-infoBg text-capelli-info; }
-  .badge-purple { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-capelli-purpleBg text-capelli-purple; }
+  .badge-green { @apply inline-flex items-center gap-1 rounded-full border border-green-200/60 bg-capelli-successBg px-2.5 py-0.5 text-xs font-medium text-capelli-success; }
+  .badge-yellow { @apply inline-flex items-center gap-1 rounded-full border border-yellow-200/60 bg-capelli-warningBg px-2.5 py-0.5 text-xs font-medium text-capelli-warning; }
+  .badge-red { @apply inline-flex items-center gap-1 rounded-full border border-red-200/60 bg-capelli-dangerBg px-2.5 py-0.5 text-xs font-medium text-capelli-danger; }
+  .badge-blue { @apply inline-flex items-center gap-1 rounded-full border border-blue-200/60 bg-capelli-infoBg px-2.5 py-0.5 text-xs font-medium text-capelli-info; }
+  .badge-purple { @apply inline-flex items-center gap-1 rounded-full border border-purple-200/60 bg-capelli-purpleBg px-2.5 py-0.5 text-xs font-medium text-capelli-purple; }
 
   /* Risk banners */
-  .banner-info { @apply bg-capelli-infoBg border border-blue-200 text-capelli-info rounded-lg p-3; }
-  .banner-warning { @apply bg-capelli-warningBg border border-yellow-200 text-capelli-warning rounded-lg p-3; }
-  .banner-danger { @apply bg-capelli-dangerBg border border-red-200 text-capelli-danger rounded-lg p-3; }
-  .banner-success { @apply bg-capelli-successBg border border-green-200 text-capelli-success rounded-lg p-3; }
+  .banner-info { @apply rounded-xl border border-blue-200/70 bg-capelli-infoBg p-3 text-capelli-info; }
+  .banner-warning { @apply rounded-xl border border-yellow-200/70 bg-capelli-warningBg p-3 text-capelli-warning; }
+  .banner-danger { @apply rounded-xl border border-red-200/70 bg-capelli-dangerBg p-3 text-capelli-danger; }
+  .banner-success { @apply rounded-xl border border-green-200/70 bg-capelli-successBg p-3 text-capelli-success; }
 
   /* Ticket coach specific */
-  .coach-step { @apply border border-gray-200 rounded-xl bg-white shadow-card; }
-  .coach-step-header { @apply flex items-center gap-3 p-4 border-b border-gray-100; }
-  .coach-checklist-item { @apply flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors; }
+  .coach-step { @apply rounded-xl border border-white/70 bg-white/85 shadow-card backdrop-blur-xl; }
+  .coach-step-header { @apply flex items-center gap-3 border-b border-slate-100/80 p-4; }
+  .coach-checklist-item { @apply flex items-start gap-3 rounded-lg border border-slate-100 p-3 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50/70; }
 
   /* Scrollbar */
   .custom-scroll::-webkit-scrollbar { width: 6px; }
   .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-  .custom-scroll::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
-  .custom-scroll::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+  .custom-scroll::-webkit-scrollbar-thumb { @apply rounded-full bg-slate-300; }
+  .custom-scroll::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
 
   /* Loading shimmer */
   .shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 50%, #eef2f7 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }

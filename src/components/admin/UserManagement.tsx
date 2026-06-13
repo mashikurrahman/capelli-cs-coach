@@ -180,7 +180,7 @@ export default function UserManagement() {
             </div>
             <div>
               <Label>Email Address</Label>
-              <Input {...register('email')} type="email" placeholder="jane@capellisports.com" className="mt-1" />
+              <Input {...register('email')} type="email" placeholder="jane@capelliCS.com" className="mt-1" />
               {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
             </div>
             <div>

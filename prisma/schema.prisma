@@ -4,6 +4,8 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  // "native" for local dev; the rhel target is required for Vercel's runtime.
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -31,8 +33,22 @@ model User {
   auditLogs       AuditLog[]
   quizAttempts    QuizAttempt[]
   uploadedDocs    Document[]
+  chatMessages    ChatMessage[]
 
   @@map("users")
+}
+
+// ─── TEAM CHAT ────────────────────────────────────────────────────────────────
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("chat_messages")
 }
 
 enum UserRole {
@@ -266,9 +282,13 @@ model Template {
   workflow     Workflow?     @relation(fields: [workflowId], references: [id])
   name         String
   type         TemplateType
+  category     String?
+  keywords     String[]
   subject      String?
   body         String
   placeholders String[]
+  isOfficial   Boolean       @default(false)
+  sortOrder    Int           @default(0)
   status       WorkflowStatus @default(DRAFT)
   version      Int           @default(1)
   createdAt    DateTime      @default(now())

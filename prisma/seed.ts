@@ -9,11 +9,11 @@ async function main() {
 
   // ─── Users ─────────────────────────────────────────────────────────────────
   const users = [
-    { name: 'Admin User', email: 'admin@capellisports.com', password: 'Admin123!', role: 'ADMIN' as const },
-    { name: 'Team Leader', email: 'teamlead@capellisports.com', password: 'Leader123!', role: 'TEAM_LEADER' as const },
-    { name: 'CS Trainer', email: 'trainer@capellisports.com', password: 'Trainer123!', role: 'TRAINER' as const },
-    { name: 'CS Agent', email: 'agent@capellisports.com', password: 'Agent123!', role: 'AGENT' as const },
-    { name: 'QA Reviewer', email: 'qa@capellisports.com', password: 'QA1234567!', role: 'QA' as const },
+    { name: 'Admin User', email: 'admin@capelliCS.com', password: 'Admin123!', role: 'ADMIN' as const },
+    { name: 'Team Leader', email: 'teamlead@capelliCS.com', password: 'Leader123!', role: 'TEAM_LEADER' as const },
+    { name: 'CS Trainer', email: 'trainer@capelliCS.com', password: 'Trainer123!', role: 'TRAINER' as const },
+    { name: 'CS Agent', email: 'agent@capelliCS.com', password: 'Agent123!', role: 'AGENT' as const },
+    { name: 'QA Reviewer', email: 'qa@capelliCS.com', password: 'QA1234567!', role: 'QA' as const },
   ];
 
   for (const u of users) {
@@ -162,7 +162,7 @@ async function main() {
       correctWorkflow: 'customized_item_return',
       hints: [
         'The item has customization (name + number)',
-        'The error was on the customer's submission, not Capelli's production',
+        "The error was on the customer's submission, not Capelli's production",
         'Review the customized item return policy carefully',
       ],
       explanation: 'This requires the Customized Item Return workflow. Even though the customer received an item with the wrong number, it was based on what they submitted. No return is accepted for correctly-produced customized items.',
@@ -215,7 +215,7 @@ async function main() {
 
 function extractPlaceholders(template: string): string[] {
   const matches = template.match(/\[([^\]]+)\]/g) ?? [];
-  return [...new Set(matches)];
+  return Array.from(new Set(matches));
 }
 
 main()

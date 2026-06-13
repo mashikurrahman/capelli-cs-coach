@@ -5,14 +5,21 @@ import { canUpload } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE ?? '52428800'); // 50MB default
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? './uploads';
+// On Vercel/serverless the project filesystem is read-only — only the OS temp
+// dir is writable. Default there so uploads don't crash. NOTE: temp storage is
+// ephemeral, so for reliable doc ingestion in production use `npm run kb:ingest`
+// against the prod DB, or wire object storage (e.g. Supabase Storage).
+const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(os.tmpdir(), 'capelli-uploads');
 
 const ALLOWED_TYPES: Record<string, string> = {
   'application/pdf': 'PDF',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'application/msword': 'DOCX',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+  'application/vnd.ms-excel': 'XLSX',
   'text/csv': 'CSV',
   'text/plain': 'TXT',
 };

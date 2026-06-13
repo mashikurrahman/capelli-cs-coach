@@ -30,6 +30,7 @@ export async function parseDocument(
   switch (ext) {
     case '.pdf': return parsePDF(filePath, title);
     case '.docx': return parseDOCX(filePath, title);
+    case '.doc': return parseDOC(filePath, title);
     case '.xlsx':
     case '.xls': return parseXLSX(filePath, title);
     case '.csv': return parseCSV(filePath, title);
@@ -52,6 +53,16 @@ async function parsePDF(filePath: string, title: string): Promise<ParsedDocument
   const chunks = chunkTextSmart(rawText, MAX_CHUNK_CHARS, OVERLAP_CHARS);
 
   return { title, rawText, chunks, pageCount };
+}
+
+// ─── DOC Parser (legacy Word 97-2003) ─────────────────────────────────────────
+async function parseDOC(filePath: string, title: string): Promise<ParsedDocument> {
+  const WordExtractor = (await import('word-extractor')).default;
+  const extractor = new WordExtractor();
+  const doc = await extractor.extract(filePath);
+  const rawText = doc.getBody();
+  const chunks = chunkTextSmart(rawText, MAX_CHUNK_CHARS, OVERLAP_CHARS);
+  return { title, rawText, chunks };
 }
 
 // ─── DOCX Parser ──────────────────────────────────────────────────────────────
@@ -153,8 +164,8 @@ function chunkTextSmart(
         });
       }
 
+      if (end >= content.length) break;
       start = end - overlap;
-      if (start >= content.length) break;
     }
   }
 

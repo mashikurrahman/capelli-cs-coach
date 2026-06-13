@@ -55,160 +55,152 @@ export default function TicketInputForm({ onAnalyze, error }: Props) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-3xl mx-auto">
-        {/* Title card */}
-        <div className="bg-gradient-to-r from-capelli-navy to-capelli-navyLight rounded-2xl p-6 mb-6 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold">New Ticket Coach Session</h2>
-              <p className="text-blue-200 text-sm">Paste the customer message and get your complete guided workflow</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {['Identifies issue type', 'Shows missing info', 'Generates email', 'Checks escalation', 'Suggests Zendesk tags'].map(feature => (
-              <span key={feature} className="text-xs bg-white/10 text-white/80 px-2.5 py-1 rounded-full">
-                ✓ {feature}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Main complaint input */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
-            <Label htmlFor="complaint" className="text-sm font-semibold text-gray-800 block mb-3">
-              Customer Message / Complaint *
-            </Label>
-            <Textarea
-              id="complaint"
-              {...register('complaint')}
-              placeholder="Paste or type the customer's email, Zendesk message, voicemail summary, or chat message here…
-
-Example: 'Hi, I ordered a medium jersey but received a large. My order is CS12345. I need this fixed ASAP.'"
-              className="min-h-[160px] text-sm font-mono"
-            />
-            {errors.complaint && (
-              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                {errors.complaint.message}
-              </p>
-            )}
-
-            {/* Example complaints */}
-            <div className="mt-3">
-              <p className="text-xs text-gray-400 mb-2">Quick examples:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {EXAMPLE_COMPLAINTS.map((ex, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setValue('complaint', ex)}
-                    className="text-xs bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-capelli-navy border border-gray-200 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-colors text-left"
-                  >
-                    {ex.slice(0, 45)}…
-                  </button>
-                ))}
+    <div className="h-full overflow-y-auto px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <section className="surface-panel overflow-hidden border-slate-200/70">
+          <div className="border-b border-slate-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(248,250,252,0.96))] p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-capelli-navy text-white shadow-sm">
+                <Sparkles className="h-5 w-5" />
               </div>
-            </div>
-          </div>
-
-          {/* Quick fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-card p-4">
-              <Label htmlFor="orderNumber" className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">
-                Order Number (if available)
-              </Label>
-              <Input
-                id="orderNumber"
-                {...register('orderNumber')}
-                placeholder="e.g. CS12345"
-                className="text-sm"
-              />
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-card p-4">
-              <Label htmlFor="clubTeamName" className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">
-                Club / Team Name (if applicable)
-              </Label>
-              <Input
-                id="clubTeamName"
-                {...register('clubTeamName')}
-                placeholder="e.g. FC United"
-                className="text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Advanced options toggle */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            {showAdvanced ? 'Hide' : 'Show'} additional context (channel, agent notes, screenshots)
-          </button>
-
-          {showAdvanced && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Channel</Label>
-                  <select
-                    {...register('channel')}
-                    className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="ZENDESK">Zendesk</option>
-                    <option value="EMAIL">Email</option>
-                    <option value="PHONE">Phone</option>
-                    <option value="CHAT">Chat</option>
-                    <option value="OTHER">Other</option>
-                  </select>
+              <div className="min-w-0">
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">New Ticket Coach Session</h2>
+                <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                  Paste the customer message and get a focused, source-backed workflow in a cleaner interface.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['Issue detection', 'Missing info', 'Email draft', 'Escalation check', 'Zendesk tags'].map(feature => (
+                    <span key={feature} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+                      {feature}
+                    </span>
+                  ))}
                 </div>
               </div>
-              <div>
-                <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">
-                  Your Notes (not sent to AI for PII safety)
-                </Label>
-                <Textarea
-                  {...register('agentNotes')}
-                  placeholder="Any context you want to add (customer history, previous tickets, etc.)"
-                  className="text-sm min-h-[80px]"
-                />
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-6 md:p-8">
+            <div className="surface-muted p-5">
+              <Label htmlFor="complaint" className="mb-3 block text-sm font-semibold text-slate-800">
+                Customer Message / Complaint *
+              </Label>
+              <Textarea
+                id="complaint"
+                {...register('complaint')}
+                placeholder="Paste or type the customer's email, Zendesk message, voicemail summary, or chat message here..."
+                className="min-h-[180px] text-sm"
+              />
+              {errors.complaint && (
+                <p className="mt-2 flex items-center gap-1 text-xs text-red-600">
+                  <AlertTriangle className="h-3 w-3" />
+                  {errors.complaint.message}
+                </p>
+              )}
+
+              <div className="mt-4">
+                <p className="mb-2 text-xs text-slate-400">Quick examples</p>
+                <div className="flex flex-wrap gap-2">
+                  {EXAMPLE_COMPLAINTS.map((ex, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setValue('complaint', ex)}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-left text-xs text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      {ex.slice(0, 45)}...
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>
-                <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">
-                  Screenshot / Photo Description
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="surface-panel surface-panel-hover p-4">
+                <Label htmlFor="orderNumber" className="mb-2 block text-xs font-semibold uppercase text-slate-500">
+                  Order Number
                 </Label>
                 <Input
-                  {...register('screenshotDescription')}
-                  placeholder="e.g. 'Customer sent photo of damaged jersey and size tag'"
+                  id="orderNumber"
+                  {...register('orderNumber')}
+                  placeholder="e.g. CS12345"
+                  className="text-sm"
+                />
+              </div>
+              <div className="surface-panel surface-panel-hover p-4">
+                <Label htmlFor="clubTeamName" className="mb-2 block text-xs font-semibold uppercase text-slate-500">
+                  Club / Team Name
+                </Label>
+                <Input
+                  id="clubTeamName"
+                  {...register('clubTeamName')}
+                  placeholder="e.g. FC United"
                   className="text-sm"
                 />
               </div>
             </div>
-          )}
 
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-red-700">Analysis Failed</p>
-                <p className="text-sm text-red-600 mt-0.5">{error}</p>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-800"
+            >
+              {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAdvanced ? 'Hide' : 'Show'} additional context
+            </button>
+
+            {showAdvanced && (
+              <div className="surface-panel surface-panel-hover space-y-4 p-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-2 block text-xs font-semibold uppercase text-slate-500">Channel</Label>
+                    <select
+                      {...register('channel')}
+                      className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200/80 bg-white/80 px-3.5 py-2 text-sm shadow-sm transition-all duration-200 focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="ZENDESK">Zendesk</option>
+                      <option value="EMAIL">Email</option>
+                      <option value="PHONE">Phone</option>
+                      <option value="CHAT">Chat</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
+                    Your Notes
+                  </Label>
+                  <Textarea
+                    {...register('agentNotes')}
+                    placeholder="Any context you want to add (customer history, previous tickets, etc.)"
+                    className="min-h-[90px] text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
+                    Screenshot / Photo Description
+                  </Label>
+                  <Input
+                    {...register('screenshotDescription')}
+                    placeholder="e.g. Customer sent photo of damaged jersey and size tag"
+                    className="text-sm"
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Submit */}
-          <Button type="submit" size="xl" className="w-full gap-2 text-base">
-            <Send className="w-5 h-5" />
-            Analyze Ticket & Get Workflow Guide
-          </Button>
-        </form>
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm font-medium text-red-700">Analysis failed</p>
+                <p className="mt-0.5 text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <Button type="submit" size="xl" className="w-full gap-2">
+              <Send className="h-5 w-5" />
+              Analyze ticket and get workflow guide
+            </Button>
+          </form>
+        </section>
       </div>
     </div>
   );

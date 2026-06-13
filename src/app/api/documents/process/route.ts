@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse the document
-    const { chunks, pageCount } = await parseDocument(doc.filePath, doc.fileType);
+    const { chunks, pageCount } = await parseDocument(doc.filePath, doc.fileName);
 
     if (chunks.length === 0) {
       await prisma.document.update({
@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
           content: chunk.content,
           pageNumber: chunk.pageNumber ?? null,
           sectionHeading: chunk.sectionHeading ?? null,
-          topic: chunk.topic ?? null,
           tokenCount: Math.ceil(chunk.content.length / 4),
           isSensitive: doc.isSensitive,
         },
@@ -63,7 +62,8 @@ export async function POST(req: NextRequest) {
 
       // Embed and store vector
       try {
-        await storeEmbedding(chunkRecord.id, chunk.content);
+        const vector = await embed(chunk.content);
+        await storeEmbedding(chunkRecord.id, vector);
         stored.push(chunkRecord.id);
       } catch (embedErr) {
         console.warn(`Embedding failed for chunk ${i}:`, embedErr);

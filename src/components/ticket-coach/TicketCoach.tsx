@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import TicketInputForm from './TicketInputForm';
 import AnalysisResult from './AnalysisResult';
 import type { AnalysisResult as AnalysisResultType, TicketInput } from '@/types';
@@ -72,25 +73,22 @@ export default function TicketCoach() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center h-full gap-6"
+            className="flex h-full flex-col items-center justify-center gap-6 px-6"
           >
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full border-4 border-blue-100 border-t-capelli-navy animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl">🔍</span>
-              </div>
+            <div className="surface-panel flex h-20 w-20 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-capelli-navy" />
             </div>
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-800">Analyzing Ticket…</h2>
-              <p className="text-gray-500 mt-1 text-sm max-w-sm">
-                Searching training materials, identifying the workflow, and preparing your step-by-step guide…
+            <div className="max-w-md text-center">
+              <h2 className="text-xl font-semibold text-slate-900">Analyzing ticket...</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Searching training materials, identifying the workflow, and preparing your step-by-step guide...
               </p>
             </div>
-            <div className="flex gap-1.5 mt-2">
+            <div className="mt-2 flex gap-1.5">
               {[0, 1, 2].map(i => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-capelli-navy"
+                  className="h-2 w-2 rounded-full bg-capelli-navy"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
                 />

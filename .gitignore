@@ -32,3 +32,4 @@ prisma/migrations/*.sql
 .turbo
 coverage/
 *.log
+tsconfig.tsbuildinfo
