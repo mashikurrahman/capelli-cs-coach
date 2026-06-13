@@ -8,6 +8,7 @@ import { z } from 'zod';
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
   role: z.enum(['ADMIN', 'TEAM_LEADER', 'TRAINER', 'AGENT', 'QA']).optional(),
   isActive: z.boolean().optional(),
   password: z.string().min(8).optional(),
@@ -39,6 +40,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (data.name) {
       updateData.name = data.name;
       updateData.avatarInitials = data.name.split(' ').map((p: string) => p[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (data.email) {
+      const taken = await prisma.user.findFirst({
+        where: { email: { equals: data.email, mode: 'insensitive' }, id: { not: params.id } },
+        select: { id: true },
+      });
+      if (taken) return NextResponse.json({ error: 'That email is already in use by another user.' }, { status: 409 });
+      updateData.email = data.email;
     }
     if (data.role) updateData.role = data.role;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;

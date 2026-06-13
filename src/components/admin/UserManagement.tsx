@@ -35,6 +35,16 @@ const createSchema = z.object({
 
 type CreateForm = z.infer<typeof createSchema>;
 
+const editSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email'),
+  role: z.enum(['ADMIN', 'TEAM_LEADER', 'TRAINER', 'AGENT', 'QA']),
+  // Optional — leave blank to keep the current password.
+  password: z.union([z.string().min(8, 'Password must be at least 8 characters'), z.literal('')]).optional(),
+});
+
+type EditForm = z.infer<typeof editSchema>;
+
 async function fetchUsers(q: string) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
@@ -49,6 +59,7 @@ export default function UserManagement() {
   const [q, setQ] = useState('');
   const [dQ, setDQ] = useState('');
   const [creating, setCreating] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ['users', dQ], queryFn: () => fetchUsers(dQ) });
   const users: any[] = data?.users ?? [];
@@ -91,10 +102,42 @@ export default function UserManagement() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 
+  const updateUser = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EditForm> }) => {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      setEditingUser(null);
+      toast({ title: 'User updated', variant: 'success' });
+    },
+    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
     defaultValues: { role: 'AGENT' },
   });
+
+  const editFormHook = useForm<EditForm>({ resolver: zodResolver(editSchema) });
+
+  function openEdit(u: any) {
+    setEditingUser(u);
+    editFormHook.reset({ name: u.name, email: u.email, role: u.role, password: '' });
+  }
+
+  function submitEdit(d: EditForm) {
+    if (!editingUser) return;
+    const payload: Partial<EditForm> = { name: d.name, email: d.email, role: d.role };
+    if (d.password) payload.password = d.password;
+    updateUser.mutate({ id: editingUser.id, data: payload });
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-5">
@@ -154,6 +197,15 @@ export default function UserManagement() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  onClick={() => openEdit(u)}
+                  className="text-gray-400 hover:text-capelli-navy"
+                  title="Edit user"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => toggleActive.mutate({ id: u.id, isActive: !u.isActive })}
                   className={cn(u.isActive ? 'text-green-600 hover:text-red-600' : 'text-gray-400 hover:text-green-600')}
                   title={u.isActive ? 'Deactivate' : 'Activate'}
@@ -198,6 +250,44 @@ export default function UserManagement() {
               <Button type="button" variant="outline" onClick={() => { setCreating(false); reset(); }} className="flex-1">Cancel</Button>
               <Button type="submit" disabled={createUser.isPending} className="flex-1 bg-capelli-navy hover:bg-blue-900">
                 {createUser.isPending ? 'Creating…' : 'Create User'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit user dialog */}
+      <Dialog open={!!editingUser} onOpenChange={open => { if (!open) setEditingUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editFormHook.handleSubmit(submitEdit)} className="space-y-4 mt-2">
+            <div>
+              <Label>Full Name</Label>
+              <Input {...editFormHook.register('name')} className="mt-1" />
+              {editFormHook.formState.errors.name && <p className="text-xs text-red-600 mt-1">{editFormHook.formState.errors.name.message}</p>}
+            </div>
+            <div>
+              <Label>Email Address</Label>
+              <Input {...editFormHook.register('email')} type="email" className="mt-1" />
+              {editFormHook.formState.errors.email && <p className="text-xs text-red-600 mt-1">{editFormHook.formState.errors.email.message}</p>}
+            </div>
+            <div>
+              <Label>Role</Label>
+              <select {...editFormHook.register('role')} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-capelli-navy">
+                {ROLES.map(r => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label>New Password</Label>
+              <Input {...editFormHook.register('password')} type="password" placeholder="Leave blank to keep current" className="mt-1" />
+              {editFormHook.formState.errors.password && <p className="text-xs text-red-600 mt-1">{editFormHook.formState.errors.password.message}</p>}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditingUser(null)} className="flex-1">Cancel</Button>
+              <Button type="submit" disabled={updateUser.isPending} className="flex-1 bg-capelli-navy hover:bg-blue-900">
+                {updateUser.isPending ? 'Saving…' : 'Save Changes'}
               </Button>
             </div>
           </form>
