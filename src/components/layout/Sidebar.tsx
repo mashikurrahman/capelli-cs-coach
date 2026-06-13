@@ -45,8 +45,12 @@ export default function Sidebar() {
   const role = (session?.user as { role?: string })?.role ?? 'AGENT';
 
   function isActive(href: string) {
-    if (href === '/dashboard') return pathname === '/dashboard';
-    return pathname.startsWith(href);
+    // Root-level pages with sub-routes must match exactly, otherwise the
+    // parent (e.g. /admin) stays highlighted on every child (/admin/users).
+    if (href === '/dashboard' || href === '/admin') return pathname === href;
+    // Boundary-safe prefix match so /admin/users highlights on its detail
+    // pages but /chat doesn't match /chatroom, etc.
+    return pathname === href || pathname.startsWith(href + '/');
   }
 
   function canSee(item: NavItem) {
