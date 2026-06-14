@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Capelli CS Coach",
+  "version": "1.0.0",
+  "description": "Match a customer complaint to the right workflow and verbatim email template — right next to your helpdesk.",
+  "permissions": ["sidePanel", "storage", "contextMenus"],
+  "host_permissions": ["https://bdcsteamassistant.vercel.app/*"],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "Open Capelli CS Coach" }
+}

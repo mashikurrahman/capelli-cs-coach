@@ -10,6 +10,7 @@
     "lint": "next lint",
     "seed:templates": "tsx scripts/seed-templates.ts",
     "kb:reembed": "tsx scripts/reembed-knowledge.ts",
+    "ext:data": "tsx scripts/build-extension-data.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
