@@ -10,7 +10,11 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
+  // Runtime uses the Supabase transaction pooler (pgbouncer, port 6543) so
+  // serverless functions don't exhaust connections. Migrations/introspection
+  // use DIRECT_URL (session pooler / direct, port 5432).
   url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
   extensions = [pgvector(map: "vector")]
 }
 
