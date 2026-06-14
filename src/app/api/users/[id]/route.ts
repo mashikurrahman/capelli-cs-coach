@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { canManageUsers } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
+import { hardDeleteUser } from '@/lib/users/delete';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
@@ -86,27 +87,31 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     const currentUserId = (session.user as { id: string }).id;
     if (params.id === currentUserId) {
-      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+      return NextResponse.json({ error: 'You cannot delete your own account.' }, { status: 400 });
     }
 
-    // Deactivate instead of hard-delete to preserve audit trail
-    await prisma.user.update({
+    const target = await prisma.user.findUnique({
       where: { id: params.id },
-      data: { isActive: false },
+      select: { id: true, name: true, email: true },
     });
+    if (!target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+
+    // Permanently remove the user and their personal activity (FK-safe).
+    await hardDeleteUser(params.id, currentUserId);
 
     await prisma.auditLog.create({
       data: {
         userId: currentUserId,
-        action: 'USER_DEACTIVATED',
+        action: 'USER_DELETED',
         resource: 'user',
         resourceId: params.id,
-        details: {} as any,
+        details: { name: target.name, email: target.email } as any,
       },
     });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error('User delete failed:', err);
+    return NextResponse.json({ error: 'Could not delete user. Please try again.' }, { status: 500 });
   }
 }

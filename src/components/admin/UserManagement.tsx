@@ -63,6 +63,7 @@ export default function UserManagement() {
   const [dQ, setDQ] = useState('');
   const [creating, setCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [deletingUser, setDeletingUser] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmBulk, setConfirmBulk] = useState(false);
 
@@ -140,6 +141,21 @@ export default function UserManagement() {
     onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      setSelectedIds(new Set());
+      setDeletingUser(null);
+      toast({ title: 'User deleted', variant: 'success' });
+    },
+    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
   const bulkDelete = useMutation({
     mutationFn: async (ids: string[]) => {
       const res = await fetch('/api/users/bulk-delete', {
@@ -148,14 +164,16 @@ export default function UserManagement() {
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
-      return res.json() as Promise<{ deleted: number; deactivated: number }>;
+      return res.json() as Promise<{ deleted: number; failed: number }>;
     },
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ['users'] });
       setSelectedIds(new Set());
       setConfirmBulk(false);
-      const parts = [r.deleted ? `${r.deleted} deleted` : '', r.deactivated ? `${r.deactivated} deactivated` : ''].filter(Boolean);
-      toast({ title: `Done — ${parts.join(', ') || 'no changes'}`, variant: 'success' });
+      const msg = r.failed
+        ? `${r.deleted} deleted · ${r.failed} failed`
+        : `${r.deleted} user${r.deleted === 1 ? '' : 's'} deleted`;
+      toast({ title: msg, variant: r.failed ? 'destructive' : 'success' });
     },
     onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
   });
@@ -280,10 +298,20 @@ export default function UserManagement() {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => toggleActive.mutate({ id: u.id, isActive: !u.isActive })}
-                  className={cn(u.isActive ? 'text-green-600 hover:text-red-600' : 'text-gray-400 hover:text-green-600')}
-                  title={u.isActive ? 'Deactivate' : 'Activate'}
+                  className={cn(u.isActive ? 'text-green-600 hover:text-amber-600' : 'text-gray-400 hover:text-green-600')}
+                  title={u.isActive ? 'Deactivate (revoke access, keep records)' : 'Activate'}
                 >
                   {u.isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setDeletingUser(u)}
+                  disabled={u.id === myId}
+                  className="text-gray-400 hover:text-red-600 disabled:opacity-30"
+                  title={u.id === myId ? "You can't delete your own account" : 'Delete permanently'}
+                >
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             ))}
@@ -371,12 +399,17 @@ export default function UserManagement() {
       <Dialog open={confirmBulk} onOpenChange={setConfirmBulk}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete {selectedIds.size} user{selectedIds.size === 1 ? '' : 's'}?</DialogTitle>
+            <DialogTitle>Permanently delete {selectedIds.size} user{selectedIds.size === 1 ? '' : 's'}?</DialogTitle>
           </DialogHeader>
           <div className="mt-2 space-y-3">
             <p className="text-sm text-gray-600">
-              This removes their access immediately. Users with no activity are permanently
-              deleted; users with history (tickets, logins) are deactivated to preserve records.
+              This permanently removes the selected accounts and their personal activity
+              (tickets, QA reviews, quiz attempts, chat messages, audit entries). Uploaded
+              knowledge-base documents are kept and reassigned to you.
+            </p>
+            <p className="text-sm font-medium text-gray-700">
+              This can’t be undone. To revoke access without deleting records, use{' '}
+              <span className="text-green-700">Deactivate</span> instead.
             </p>
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="outline" onClick={() => setConfirmBulk(false)} className="flex-1">Cancel</Button>
@@ -387,6 +420,37 @@ export default function UserManagement() {
                 className="flex-1 bg-red-600 hover:bg-red-700"
               >
                 {bulkDelete.isPending ? 'Deleting…' : `Delete ${selectedIds.size}`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Single delete confirmation */}
+      <Dialog open={!!deletingUser} onOpenChange={open => { if (!open) setDeletingUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {deletingUser?.name}?</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <p className="text-sm text-gray-600">
+              This permanently removes <span className="font-medium text-gray-800">{deletingUser?.email}</span>{' '}
+              and their personal activity (tickets, QA reviews, quiz attempts, chat messages,
+              audit entries). Any knowledge-base documents they uploaded are kept and reassigned to you.
+            </p>
+            <p className="text-sm font-medium text-gray-700">
+              This can’t be undone. To revoke access without deleting records, use{' '}
+              <span className="text-green-700">Deactivate</span> instead.
+            </p>
+            <div className="flex gap-3 pt-1">
+              <Button type="button" variant="outline" onClick={() => setDeletingUser(null)} className="flex-1">Cancel</Button>
+              <Button
+                type="button"
+                onClick={() => deleteUser.mutate(deletingUser.id)}
+                disabled={deleteUser.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {deleteUser.isPending ? 'Deleting…' : 'Delete permanently'}
               </Button>
             </div>
           </div>

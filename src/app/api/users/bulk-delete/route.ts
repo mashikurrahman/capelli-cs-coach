@@ -3,15 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { canManageUsers } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
+import { hardDeleteUser } from '@/lib/users/delete';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
 const schema = z.object({ ids: z.array(z.string().min(1)).min(1) });
 
-// Bulk-remove users. Hard-delete those with no dependent records; for users
-// that have history (tickets, audit logs, etc.) a hard delete would break
-// foreign keys, so we deactivate them instead. Returns a summary of both.
+// Permanently remove the selected users and their personal activity. Each user
+// is deleted in its own transaction (FK-safe) so one failure doesn't abort the
+// rest. Returns how many were deleted and any that failed.
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,35 +31,31 @@ export async function POST(req: NextRequest) {
     }
 
     const deleted: string[] = [];
-    const deactivated: string[] = [];
+    const failed: string[] = [];
 
     for (const id of targets) {
       try {
-        await prisma.user.delete({ where: { id } });
+        await hardDeleteUser(id, currentUserId);
         deleted.push(id);
-      } catch {
-        // Likely a foreign-key constraint (user has history) — deactivate instead.
-        try {
-          await prisma.user.update({ where: { id }, data: { isActive: false } });
-          deactivated.push(id);
-        } catch {
-          /* user no longer exists — ignore */
-        }
+      } catch (err) {
+        console.error(`Bulk delete failed for user ${id}:`, err);
+        failed.push(id);
       }
     }
 
     await prisma.auditLog.create({
       data: {
         userId: currentUserId,
-        action: 'USER_DEACTIVATED',
+        action: 'USER_DELETED',
         resource: 'user',
-        details: { bulk: true, deleted: deleted.length, deactivated: deactivated.length } as any,
+        details: { bulk: true, deleted: deleted.length, failed: failed.length } as any,
       },
     });
 
-    return NextResponse.json({ deleted: deleted.length, deactivated: deactivated.length });
+    return NextResponse.json({ deleted: deleted.length, failed: failed.length });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    console.error('Bulk delete error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

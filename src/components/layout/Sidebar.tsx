@@ -83,7 +83,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'glass-dark relative z-20 flex h-screen flex-col text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] no-print',
+        'relative z-20 flex h-screen flex-col border-r border-white/10 bg-gradient-to-b from-[#16305f] via-[#102444] to-[#0b1730] text-white shadow-sidebar transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] no-print',
         collapsed ? 'w-[72px]' : 'w-64'
       )}
     >
