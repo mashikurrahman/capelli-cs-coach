@@ -87,12 +87,13 @@ export default function EmailTemplates({ templates }: { templates: Template[] })
                   <Tag className="w-3.5 h-3.5" /> {cat}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {items.map(t => (
+                  {items.map((t, i) => (
                     <Link
                       key={t.id}
                       href={`/email-templates/${t.id}`}
-                      className="group flex items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 shadow-card p-4
-                                 hover:border-blue-200 hover:shadow-card-hover transition-all"
+                      style={{ animationDelay: `${Math.min(i, 10) * 25}ms` }}
+                      className="group flex animate-fade-up items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 shadow-card p-4
+                                 [animation-fill-mode:backwards] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-card-hover transition-all"
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800 group-hover:text-capelli-navy truncate">{t.name}</p>

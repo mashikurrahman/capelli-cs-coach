@@ -106,6 +106,14 @@ const config: Config = {
           '0%, 100%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.2)' },
         },
+        'pop-in': {
+          from: { opacity: '0', transform: 'translateY(8px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'overlay-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -115,6 +123,8 @@ const config: Config = {
         'slide-in-right': 'slide-in-right 0.3s ease-out',
         shimmer: 'shimmer 1.5s infinite',
         'check-bounce': 'check-bounce 0.3s ease-out',
+        'pop-in': 'pop-in 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+        'overlay-in': 'overlay-in 0.15s ease-out',
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
@@ -126,6 +136,8 @@ const config: Config = {
         'card-hover': '0 20px 40px -12px rgba(15, 23, 42, 0.15), 0 0 40px 0 rgba(37, 99, 235, 0.05)',
         sidebar: '12px 0 48px -12px rgba(15, 23, 42, 0.15)',
         glow: '0 0 20px rgba(37, 99, 235, 0.3)',
+        glass: 'inset 0 1px 0 0 rgba(255,255,255,0.6), 0 8px 30px -12px rgba(15,23,42,0.18)',
+        palette: '0 24px 70px -20px rgba(15,23,42,0.45), inset 0 1px 0 0 rgba(255,255,255,0.7)',
       },
     },
   },

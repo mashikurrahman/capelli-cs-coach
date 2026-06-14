@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { prisma } from '@/lib/db/prisma';
 import TemplateFiller from '@/components/email-templates/TemplateFiller';
+import RecordRecentTemplate from '@/components/email-templates/RecordRecentTemplate';
 
 export const metadata: Metadata = { title: 'Email Template' };
 
@@ -18,6 +19,7 @@ export default async function TemplateDetailPage({ params }: { params: { id: str
 
   return (
     <div className="flex flex-col h-full">
+      <RecordRecentTemplate id={template.id} name={template.name} category={template.category} />
       <Header title={template.name} subtitle={template.category ?? 'Email template'} />
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 max-w-5xl mx-auto">

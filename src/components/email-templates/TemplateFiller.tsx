@@ -96,11 +96,15 @@ export default function TemplateFiller({ name, subject, body, placeholders, init
           <h3 className="text-sm font-semibold text-gray-800">Email preview</h3>
           <button
             onClick={copy}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg
-                       bg-capelli-navy text-white hover:bg-capelli-navyLight transition-colors"
+            className={cn(
+              'press inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg text-white transition-colors',
+              copied ? 'bg-capelli-success' : 'bg-capelli-navy hover:bg-capelli-navyLight'
+            )}
           >
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? 'Copied' : 'Copy email'}
+            {copied
+              ? <Check className="w-3.5 h-3.5 animate-check-bounce" />
+              : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'Copied!' : 'Copy email'}
           </button>
         </div>
 

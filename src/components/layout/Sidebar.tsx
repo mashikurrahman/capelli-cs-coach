@@ -20,21 +20,44 @@ interface NavItem {
   badge?: string;
 }
 
-const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { href: '/ticket-coach', label: 'Ticket Coach', icon: <Bot className="w-4 h-4" />, badge: 'CORE' },
-  { href: '/workflows', label: 'Workflow Library', icon: <BookOpen className="w-4 h-4" /> },
-  { href: '/email-templates', label: 'Email Templates', icon: <FileText className="w-4 h-4" /> },
-  { href: '/knowledge-base', label: 'Knowledge Base', icon: <Search className="w-4 h-4" /> },
-  { href: '/training', label: 'Training Mode', icon: <GraduationCap className="w-4 h-4" /> },
-  { href: '/qa-review', label: 'QA Review', icon: <ShieldCheck className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'QA'] },
-];
+interface NavSection {
+  label?: string;
+  items: NavItem[];
+}
 
-const adminItems: NavItem[] = [
-  { href: '/admin', label: 'Admin Overview', icon: <Settings className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER'] },
-  { href: '/admin/upload', label: 'Upload Docs', icon: <Upload className="w-4 h-4" />, roles: ['ADMIN', 'TRAINER'] },
-  { href: '/admin/users', label: 'Manage Users', icon: <Users className="w-4 h-4" />, roles: ['ADMIN'] },
-  { href: '/admin/analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER'] },
+// Triaged around how agents actually work: the daily drivers sit together up
+// top under "Workspace", learning/quality next, admin tucked at the bottom.
+const sections: NavSection[] = [
+  {
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    ],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { href: '/ticket-coach', label: 'Ticket Coach', icon: <Bot className="w-4 h-4" />, badge: 'CORE' },
+      { href: '/email-templates', label: 'Email Templates', icon: <FileText className="w-4 h-4" /> },
+      { href: '/knowledge-base', label: 'Knowledge Base', icon: <Search className="w-4 h-4" /> },
+      { href: '/workflows', label: 'Workflow Library', icon: <BookOpen className="w-4 h-4" /> },
+    ],
+  },
+  {
+    label: 'Learn & QA',
+    items: [
+      { href: '/training', label: 'Training Mode', icon: <GraduationCap className="w-4 h-4" /> },
+      { href: '/qa-review', label: 'QA Review', icon: <ShieldCheck className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'QA'] },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { href: '/admin', label: 'Admin Overview', icon: <Settings className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER'] },
+      { href: '/admin/upload', label: 'Upload Docs', icon: <Upload className="w-4 h-4" />, roles: ['ADMIN', 'TRAINER'] },
+      { href: '/admin/users', label: 'Manage Users', icon: <Users className="w-4 h-4" />, roles: ['ADMIN'] },
+      { href: '/admin/analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER'] },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -60,7 +83,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative z-20 flex h-screen flex-col border-r border-white/5 bg-slate-950/80 text-white shadow-sidebar backdrop-blur-3xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] no-print',
+        'glass-dark relative z-20 flex h-screen flex-col text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] no-print',
         collapsed ? 'w-[72px]' : 'w-64'
       )}
     >
@@ -87,29 +110,25 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 custom-scroll">
-        {/* Main nav */}
-        <div className="space-y-0.5">
-          {navItems.filter(canSee).map(item => (
-            <NavLink key={item.href} item={item} collapsed={collapsed} active={isActive(item.href)} />
-          ))}
-        </div>
-
-        {/* Admin section */}
-        {adminItems.some(canSee) && (
-          <>
-            {!collapsed && (
-              <p className="mb-1 mt-5 px-3 text-xs font-semibold uppercase text-slate-400">
-                Admin
-              </p>
-            )}
-            {collapsed && <div className="my-3 border-t border-white/10" />}
-            <div className="space-y-0.5">
-              {adminItems.filter(canSee).map(item => (
-                <NavLink key={item.href} item={item} collapsed={collapsed} active={isActive(item.href)} />
-              ))}
+        {sections.map((section, si) => {
+          const visible = section.items.filter(canSee);
+          if (visible.length === 0) return null;
+          return (
+            <div key={si} className={si > 0 ? 'mt-5' : ''}>
+              {section.label && !collapsed && (
+                <p className="mb-1 px-3 text-xs font-semibold uppercase text-slate-400">
+                  {section.label}
+                </p>
+              )}
+              {section.label && collapsed && <div className="mb-3 border-t border-white/10" />}
+              <div className="space-y-0.5">
+                {visible.map(item => (
+                  <NavLink key={item.href} item={item} collapsed={collapsed} active={isActive(item.href)} />
+                ))}
+              </div>
             </div>
-          </>
-        )}
+          );
+        })}
       </nav>
 
       {/* User profile + logout */}

@@ -31,25 +31,13 @@
   * { @apply border-border; }
   html { @apply scroll-smooth; }
   body {
-    @apply bg-slate-50 text-foreground font-sans antialiased;
+    @apply bg-slate-100 text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Minimal, calm canvas: two very soft brand tints, no grid noise. */
     background-image:
-      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.06) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%),
-      linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px),
-      linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, auto, 56px 56px, 56px 56px;
-    background-position: 0 0, 0 0, 0 0, center, center;
+      radial-gradient(900px 500px at 12% -8%, rgba(37, 99, 235, 0.07), transparent 60%),
+      radial-gradient(800px 500px at 100% 0%, rgba(124, 58, 237, 0.05), transparent 55%);
     background-attachment: fixed;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 18%);
-    z-index: -1;
   }
   ::selection {
     background: rgba(0, 48, 135, 0.14);
@@ -59,17 +47,45 @@
 }
 
 @layer components {
+  /* ── Content surfaces ────────────────────────────────────────────────
+     Cards/panels are solid (no blur). They scroll, repeat, and stack —
+     blurring them is what tanks FPS. Clean white + soft shadow reads as
+     "minimal sleek" and stays cheap. */
   .surface-panel {
-    @apply rounded-xl border border-white/80 bg-white/70 shadow-card backdrop-blur-2xl;
+    @apply rounded-xl border border-slate-200/70 bg-white shadow-card;
   }
 
   .surface-panel-hover {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-card-hover hover:border-white;
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-card-hover hover:border-slate-300;
   }
 
   .surface-muted {
-    @apply rounded-xl border border-slate-200/50 bg-slate-50/60 backdrop-blur-md;
+    @apply rounded-xl border border-slate-200/60 bg-slate-50;
   }
+
+  /* ── Liquid glass (chrome only) ──────────────────────────────────────
+     Reserve these for fixed, non-scrolling surfaces: header, sidebar,
+     floating dock, command palette, modals. Blur is budgeted at md/lg —
+     never 2xl/3xl — and `saturate` gives the "liquid" depth cheaply. */
+  .glass {
+    @apply border border-white/60 bg-white/65 backdrop-blur-md backdrop-saturate-150;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.6), 0 8px 30px -12px rgba(15, 23, 42, 0.18);
+  }
+
+  .glass-strong {
+    @apply border border-white/70 bg-white/80 backdrop-blur-lg backdrop-saturate-150;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.7), 0 24px 60px -20px rgba(15, 23, 42, 0.30);
+  }
+
+  .glass-dark {
+    @apply border border-white/10 bg-slate-950/70 backdrop-blur-md backdrop-saturate-150;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 12px 0 48px -16px rgba(2, 6, 23, 0.5);
+  }
+
+  /* ── Micro-interactions ──────────────────────────────────────────────
+     Tiny, fast feedback. Decoration that makes you wait is banned. */
+  .press { @apply transition-transform duration-100 active:scale-[0.97]; }
+  .lift  { @apply transition-all duration-200 ease-out hover:-translate-y-0.5; }
 
   /* Sidebar styles */
   .sidebar-item {
@@ -95,7 +111,7 @@
   .banner-success { @apply rounded-xl border border-green-200/70 bg-capelli-successBg p-3 text-capelli-success; }
 
   /* Ticket coach specific */
-  .coach-step { @apply rounded-xl border border-white/70 bg-white/85 shadow-card backdrop-blur-xl; }
+  .coach-step { @apply rounded-xl border border-slate-200/70 bg-white shadow-card; }
   .coach-step-header { @apply flex items-center gap-3 border-b border-slate-100/80 p-4; }
   .coach-checklist-item { @apply flex items-start gap-3 rounded-lg border border-slate-100 p-3 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50/70; }
 
@@ -118,4 +134,27 @@
   .no-print { display: none !important; }
   .sidebar { display: none !important; }
   body { background: white; }
+}
+
+/* ── Accessibility & performance guardrails ────────────────────────────
+   The aesthetic must never cost agents time or comfort. */
+
+/* Honor reduced-motion: kill animations/transitions for users who ask. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Honor reduced-transparency: drop the blur, make glass solid. Also a
+   safety net on low-power devices where heavy blur would stutter. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong { background: #ffffff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .glass-dark { background: #0b1220 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
