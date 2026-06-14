@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/utils';
 import Sidebar from '@/components/layout/Sidebar';
+import FloatingChat from '@/components/chat/FloatingChat';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -14,6 +15,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
       </div>
+      {/* Team chat lives as a floating dock on every page, not in the sidebar. */}
+      <FloatingChat />
     </div>
   );
 }

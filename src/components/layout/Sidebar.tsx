@@ -8,7 +8,7 @@ import { getInitials } from '@/lib/utils/helpers';
 import {
   Bot, BookOpen, FileText, Search, GraduationCap, ShieldCheck,
   LayoutDashboard, Settings, LogOut, ChevronLeft, ChevronRight,
-  Upload, Users, BarChart3, MessageSquare,
+  Upload, Users, BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,7 +27,6 @@ const navItems: NavItem[] = [
   { href: '/email-templates', label: 'Email Templates', icon: <FileText className="w-4 h-4" /> },
   { href: '/knowledge-base', label: 'Knowledge Base', icon: <Search className="w-4 h-4" /> },
   { href: '/training', label: 'Training Mode', icon: <GraduationCap className="w-4 h-4" /> },
-  { href: '/chat', label: 'Team Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { href: '/qa-review', label: 'QA Review', icon: <ShieldCheck className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'QA'] },
 ];
 
