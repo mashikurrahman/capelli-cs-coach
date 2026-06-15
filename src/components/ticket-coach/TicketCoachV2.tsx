@@ -1,14 +1,28 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Sparkles, ChevronRight, RotateCcw, CheckCircle2, LayoutGrid, Wand2, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Sparkles, ChevronRight, RotateCcw, CheckCircle2, LayoutGrid, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import WorkflowRunner from './WorkflowRunner';
 import { matchWorkflows } from '@/lib/workflows/match';
+import { cleanComplaint } from '@/lib/text/clean-complaint';
 import { DEFAULT_WORKFLOWS, type WorkflowDefinition } from '@/lib/workflows/default-workflows';
 import type { TemplateLite } from '@/lib/workflows/match';
 
 type Phase = 'input' | 'pick' | 'run' | 'done';
+
+interface DisplayMatch {
+  workflow: WorkflowDefinition;
+  matchedPhrases: string[];
+  score?: number;
+  method?: 'both' | 'keyword' | 'semantic' | 'ai';
+}
+
+interface Analysis {
+  issues: string[];
+  reasoning: string;
+  extracted: Record<string, string>;
+}
 
 const EXAMPLES = [
   'I ordered a medium jersey but received a large. Order CS12345.',
@@ -26,31 +40,64 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
   const [clubName, setClubName] = useState('');
   const [selected, setSelected] = useState<WorkflowDefinition | null>(null);
   const [browseAll, setBrowseAll] = useState(false);
-  const [smartMatches, setSmartMatches] = useState<WorkflowDefinition[] | null>(null);
-  const [smartLoading, setSmartLoading] = useState(false);
+  const [hybridMatches, setHybridMatches] = useState<DisplayMatch[] | null>(null);
+  const [hybridLoading, setHybridLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
-  const matches = useMemo(() => (complaint.trim() ? matchWorkflows(complaint, 4) : []), [complaint]);
+  // Instant keyword matches (on cleaned text) — shown immediately while the
+  // hybrid (keyword + semantic) result is fetched in the background.
+  const keywordMatches = useMemo<DisplayMatch[]>(() => {
+    const c = complaint.trim();
+    if (!c) return [];
+    return matchWorkflows(cleanComplaint(c), 4).map(m => ({
+      workflow: m.workflow,
+      matchedPhrases: m.matchedPhrases,
+      method: 'keyword' as const,
+    }));
+  }, [complaint]);
 
-  async function runSmartMatch() {
-    if (!complaint.trim() || smartLoading) return;
-    setSmartLoading(true);
-    setSmartMatches(null);
-    try {
-      const res = await fetch('/api/ticket-coach/match', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ complaint }),
-      });
-      const data = await res.json();
-      const ids: string[] = (data.matches ?? []).map((m: { workflowId: string }) => m.workflowId);
-      const wfs = ids.map(id => DEFAULT_WORKFLOWS.find(w => w.workflowId === id)).filter(Boolean) as WorkflowDefinition[];
-      setSmartMatches(wfs);
-    } catch {
-      setSmartMatches([]);
-    } finally {
-      setSmartLoading(false);
-    }
-  }
+  // Debounced hybrid match: blends keyword + semantic server-side for accuracy.
+  const reqId = useRef(0);
+  useEffect(() => {
+    const c = complaint.trim();
+    if (c.length < 6) { setHybridMatches(null); setHybridLoading(false); setAnalysis(null); return; }
+    const id = ++reqId.current;
+    setHybridLoading(true);
+    const handle = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/ticket-coach/match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ complaint: c }),
+        });
+        const data = await res.json();
+        if (id !== reqId.current) return; // a newer request superseded this one
+        const mapped: DisplayMatch[] = (data.matches ?? [])
+          .map((m: { workflowId: string; score: number; matchedPhrases: string[]; method: DisplayMatch['method'] }) => {
+            const workflow = DEFAULT_WORKFLOWS.find(w => w.workflowId === m.workflowId);
+            return workflow ? { workflow, matchedPhrases: m.matchedPhrases ?? [], score: m.score, method: m.method } : null;
+          })
+          .filter(Boolean);
+        setHybridMatches(mapped);
+        // The brain ran on a tricky complaint — surface its understanding and
+        // auto-fill any details it pulled out (only into empty fields).
+        const a: Analysis | undefined = data.analysis;
+        setAnalysis(a ?? null);
+        if (a?.extracted) {
+          if (a.extracted.orderNumber) setOrderNumber(prev => prev || a.extracted.orderNumber);
+          if (a.extracted.clubName) setClubName(prev => prev || a.extracted.clubName);
+        }
+      } catch {
+        if (id === reqId.current) setHybridMatches(null); // fall back to keyword view
+      } finally {
+        if (id === reqId.current) setHybridLoading(false);
+      }
+    }, 450);
+    return () => clearTimeout(handle);
+  }, [complaint]);
+
+  // Prefer the blended result once it arrives; keyword matches cover the gap.
+  const matches: DisplayMatch[] = (hybridMatches && hybridMatches.length > 0) ? hybridMatches : keywordMatches;
 
   const grouped = useMemo(() => {
     const map = new Map<string, WorkflowDefinition[]>();
@@ -65,7 +112,7 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
 
   function reset() {
     setPhase('input'); setComplaint(''); setOrderNumber(''); setClubName('');
-    setSelected(null); setBrowseAll(false); setSmartMatches(null);
+    setSelected(null); setBrowseAll(false); setHybridMatches(null); setAnalysis(null);
   }
 
   function complete() {
@@ -145,53 +192,66 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
           </div>
         </div>
 
+        {/* AI understanding of a tricky complaint */}
+        {analysis && (analysis.issues.length > 0 || analysis.reasoning) && (
+          <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 mb-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Understood by AI
+            </p>
+            {analysis.issues.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {analysis.issues.map((iss, i) => (
+                  <span key={i} className="text-xs bg-white border border-purple-200 text-purple-800 rounded-full px-2.5 py-0.5">{iss}</span>
+                ))}
+              </div>
+            )}
+            {analysis.reasoning && <p className="text-xs text-gray-600">{analysis.reasoning}</p>}
+            {Object.keys(analysis.extracted).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                {Object.entries(analysis.extracted).map(([k, v]) => (
+                  <span key={k}><span className="font-medium text-gray-600">{k.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}:</span> {v}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Matched workflows */}
         {complaint.trim() && (
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
                 <Sparkles className="w-4 h-4 text-capelli-navy" /> Matching workflows
+                {hybridLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
               </h3>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={runSmartMatch} disabled={smartLoading}
-                  className="inline-flex items-center gap-1.5 text-xs text-capelli-navy hover:underline disabled:opacity-50">
-                  {smartLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />} Smart match
-                </button>
-                <button type="button" onClick={() => setBrowseAll(b => !b)} className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-capelli-navy">
-                  <LayoutGrid className="w-3.5 h-3.5" /> {browseAll ? 'Hide all' : 'Browse all'}
-                </button>
-              </div>
+              <button type="button" onClick={() => setBrowseAll(b => !b)} className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-capelli-navy">
+                <LayoutGrid className="w-3.5 h-3.5" /> {browseAll ? 'Hide all' : 'Browse all'}
+              </button>
             </div>
-
-            {/* Smart (semantic) match results */}
-            {smartMatches && smartMatches.length > 0 && (
-              <div className="mb-3 space-y-2">
-                <p className="text-xs text-capelli-navy font-medium flex items-center gap-1.5"><Wand2 className="w-3.5 h-3.5" /> Smart match results</p>
-                {smartMatches.map(wf => (
-                  <button key={wf.workflowId} type="button" onClick={() => pick(wf)}
-                    className="w-full text-left flex items-center justify-between gap-3 bg-white rounded-xl border border-purple-200 p-4 hover:shadow-card-hover transition-all">
-                    <p className="text-sm font-semibold text-gray-800">{wf.name}</p>
-                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
-            {smartMatches && smartMatches.length === 0 && !smartLoading && (
-              <p className="mb-3 text-xs text-gray-400">Smart match found nothing — browse all workflows below.</p>
-            )}
 
             {matches.length > 0 ? (
               <div className="space-y-2">
-                {matches.map(({ workflow, matchedPhrases }, idx) => (
+                {(() => {
+                  // Only call the top result a confident "Best match" when the
+                  // signal is strong (exact keyword hit, both signals agree, or
+                  // a high blended score). Otherwise present it as a softer
+                  // suggestion so a weak semantic guess never looks authoritative.
+                  const top = matches[0];
+                  const confident = top.score === undefined || top.method === 'both' || top.method === 'ai' || (top.score ?? 0) >= 0.6;
+                  return (<>
+                  {!confident && (
+                    <p className="text-xs text-amber-600 mb-1">Not certain — review these or Browse all.</p>
+                  )}
+                  {matches.map(({ workflow, matchedPhrases }, idx) => (
                   <button key={workflow.workflowId} type="button" onClick={() => pick(workflow)}
                     className={cn(
                       'w-full text-left flex items-center justify-between gap-3 bg-white rounded-xl border p-4 transition-all hover:shadow-card-hover',
-                      idx === 0 ? 'border-capelli-navy ring-1 ring-capelli-navy/20' : 'border-gray-200 hover:border-blue-200'
+                      idx === 0 && confident ? 'border-capelli-navy ring-1 ring-capelli-navy/20' : 'border-gray-200 hover:border-blue-200'
                     )}>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-gray-800">{workflow.name}</p>
-                        {idx === 0 && <span className="text-[10px] font-bold uppercase text-capelli-navy bg-blue-50 px-1.5 py-0.5 rounded">Best match</span>}
+                        {idx === 0 && confident && <span className="text-[10px] font-bold uppercase text-capelli-navy bg-blue-50 px-1.5 py-0.5 rounded">Best match</span>}
                       </div>
                       {matchedPhrases.length > 0 && (
                         <p className="text-xs text-gray-400 mt-0.5">Matched: {matchedPhrases.slice(0, 4).join(', ')}</p>
@@ -199,7 +259,9 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
                   </button>
-                ))}
+                  ))}
+                  </>);
+                })()}
               </div>
             ) : (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">

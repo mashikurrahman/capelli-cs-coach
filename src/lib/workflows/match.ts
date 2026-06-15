@@ -5,6 +5,7 @@
  * always sees ranked suggestions and can override.
  */
 import { DEFAULT_WORKFLOWS, type WorkflowDefinition } from './default-workflows';
+import { expandForMatch } from './synonyms';
 
 export interface WorkflowMatch {
   workflow: WorkflowDefinition;
@@ -17,7 +18,9 @@ function normalize(s: string): string {
 }
 
 export function matchWorkflows(complaint: string, limit = 4): WorkflowMatch[] {
-  const text = ' ' + normalize(complaint) + ' ';
+  // Expand paraphrases to canonical terms ("has a hole" -> "damaged") so the
+  // trigger phrases catch real-world wording.
+  const text = ' ' + expandForMatch(complaint) + ' ';
   const results: WorkflowMatch[] = DEFAULT_WORKFLOWS.map(workflow => {
     const matchedPhrases: string[] = [];
     let score = 0;
@@ -59,7 +62,7 @@ export function matchTemplates(
   templates: TemplateLite[],
   limit = 6
 ): TemplateLite[] {
-  const hay = normalize(
+  const hay = expandForMatch(
     [complaint, workflow?.name, ...(workflow?.triggerPhrases ?? [])].filter(Boolean).join(' ')
   );
 

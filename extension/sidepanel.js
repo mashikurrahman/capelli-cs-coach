@@ -1,4 +1,4 @@
-import { matchWorkflows, matchTemplates, renderBody, derivePlaceholders } from './matcher.js';
+import { matchWorkflows, matchTemplates, renderBody, derivePlaceholders, setSynonyms } from './matcher.js';
 
 const APP_URL = 'https://bdcsteamassistant.vercel.app';
 const TEMPLATES_ENDPOINT = `${APP_URL}/api/public/templates`;
@@ -19,6 +19,10 @@ async function loadWorkflows() {
     const res = await fetch(chrome.runtime.getURL('data/workflows.json'));
     WORKFLOWS = await res.json();
   } catch { WORKFLOWS = []; }
+  try {
+    const res = await fetch(chrome.runtime.getURL('data/synonyms.json'));
+    setSynonyms(await res.json());
+  } catch { /* synonyms optional */ }
 }
 
 async function loadTemplates() {

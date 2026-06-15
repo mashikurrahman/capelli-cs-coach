@@ -33,3 +33,5 @@ prisma/migrations/*.sql
 coverage/
 *.log
 tsconfig.tsbuildinfo
+
+.vercel

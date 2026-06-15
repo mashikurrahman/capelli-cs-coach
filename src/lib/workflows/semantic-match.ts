@@ -10,7 +10,10 @@ import { DEFAULT_WORKFLOWS } from './default-workflows';
 let cache: { ids: string[]; vectors: number[][] } | null = null;
 
 function matchText(wf: (typeof DEFAULT_WORKFLOWS)[number]): string {
-  return [wf.name, ...wf.whenToUse, ...wf.triggerPhrases].join('. ');
+  // Include the humanized category — a strong, distinctive anchor (e.g.
+  // "damaged defective") that sharpens semantic matches for paraphrases.
+  const category = wf.category.replace(/_/g, ' ').toLowerCase();
+  return [wf.name, category, ...wf.whenToUse, ...wf.triggerPhrases].join('. ');
 }
 
 function cosine(a: number[], b: number[]): number {

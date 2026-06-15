@@ -5,8 +5,27 @@ export function normalize(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// Synonym expansion (mirrors src/lib/workflows/synonyms.ts). Loaded from
+// data/synonyms.json at runtime via setSynonyms(); maps paraphrases to the
+// canonical terms used in trigger phrases ("has a hole" -> "damaged").
+let SYNONYMS = {};
+export function setSynonyms(map) { SYNONYMS = map || {}; }
+
+export function expandForMatch(text) {
+  const base = ' ' + normalize(text) + ' ';
+  const extras = [];
+  for (const canonical in SYNONYMS) {
+    const aliases = SYNONYMS[canonical] || [];
+    for (const alias of aliases) {
+      const a = normalize(alias);
+      if (a && base.includes(a)) { extras.push(canonical); break; }
+    }
+  }
+  return (normalize(text) + (extras.length ? ' ' + extras.join(' ') : '')).trim();
+}
+
 export function matchWorkflows(complaint, workflows, limit = 4) {
-  const text = ' ' + normalize(complaint) + ' ';
+  const text = ' ' + expandForMatch(complaint) + ' ';
   return workflows
     .map((workflow) => {
       const matchedPhrases = [];
@@ -27,7 +46,7 @@ export function matchWorkflows(complaint, workflows, limit = 4) {
 }
 
 export function matchTemplates(complaint, workflow, templates, limit = 6) {
-  const hay = normalize(
+  const hay = expandForMatch(
     [complaint, workflow?.name, ...((workflow?.triggerPhrases) || [])].filter(Boolean).join(' ')
   );
 

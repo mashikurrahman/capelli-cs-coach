@@ -1793,4 +1793,309 @@ Action: Escalated to FBB team.`,
     sourceNote: 'FBB Process — Contact Sheet.',
     sortOrder: 30,
   },
+
+  // ─── 31. International Shipping ────────────────────────────────────────────
+  {
+    workflowId: 'international_shipping',
+    name: 'International Shipping Workflow',
+    category: 'INTERNATIONAL_SHIPPING',
+    triggerPhrases: ['international', 'international shipping', 'outside the us', 'overseas', 'canada', 'ship to canada', 'customs', 'duties', 'import', 'another country', 'ship internationally', 'europe', 'european', 'uk', 'abroad'],
+    whenToUse: [
+      'Customer wants to ship an order outside the United States',
+      'Customer asks whether Capelli ships internationally',
+      'Customer asks about customs duties or import fees',
+    ],
+    doNotUseWhen: [
+      'Customer is in the US asking about domestic shipping — use Order Status / Processing Time',
+      'Customer is asking about an EU club specifically — direct them to the EU site/team',
+    ],
+    requiredInfo: ['Country to ship to', 'Club / team shop', 'Items needed'],
+    systemChecks: ['ZENDESK'],
+    steps: [
+      { stepNumber: 1, title: 'Confirm capellisport.com does not ship internationally', description: 'The parent site (capellisport.com) does not ship internationally. International orders must go through the club team shop.', isRequired: true },
+      { stepNumber: 2, title: 'Provide the club team-shop link', description: 'Share the correct team-shop link so the customer can place the order with their country/address at checkout.', agentAction: 'Insert [Club Link].', isRequired: true },
+      { stepNumber: 3, title: 'Explain customs/duties and PayPal requirement', description: 'Customer is responsible for any customs/duty fees and must use a PayPal account to complete an international order.', isRequired: true },
+    ],
+    customerEmailTemplate: `Good morning/ Afternoon,
+
+Thank you for contacting Capelli Sport Customer Service. Kindly place your order [Item] through the link below.
+
+[Club Link]
+
+You may add the address and the country in which you reside once you proceed to check-out. Please note that you are responsible for any custom duty fees associated with this purchase and that you must have a PayPal account to complete your order.
+
+Should you require further assistance, please don't hesitate to contact us.`,
+    internalNoteTemplate: `International shipping inquiry.
+Country: [Country]
+Club/Team: [Club]
+Action: Provided team-shop link; advised customs/duties + PayPal requirement.`,
+    preSendChecklist: [
+      { key: 'club_link', label: 'Correct club team-shop link included', isRequired: true },
+      { key: 'paypal_note', label: 'Customs/duties + PayPal requirement stated', isRequired: true },
+    ],
+    zendeskTags: [
+      { tagName: 'general_inquiry', tagCategory: 'INQUIRY_TYPE', isRequired: true },
+      { tagName: 'international', tagCategory: 'ISSUE_TYPE', isRequired: false },
+    ],
+    ticketStatus: 'Solved',
+    ticketPriority: 'Normal',
+    escalationRules: [
+      { triggerReason: 'EU-specific club order', escalateTo: 'EU Customer Service', details: 'Direct EU clubs to capellisport.eu / customerservice@capellisport.co.uk.' },
+    ],
+    commonMistakes: ['Telling customer capellisport.com can ship internationally', 'Forgetting the PayPal requirement', 'Not mentioning customs/duties'],
+    doRules: ['Route international orders through the team shop', 'State customs/duties responsibility', 'Note the PayPal requirement'],
+    dontRules: ['Do not promise international shipping from capellisport.com', 'Do not absorb customs fees'],
+    sourceNote: 'CS Templates — International Shipping Template.',
+    sortOrder: 31,
+  },
+
+  // ─── 32. Gift Card / Certificate ──────────────────────────────────────────
+  {
+    workflowId: 'gift_card',
+    name: 'Gift Card / Certificate Workflow',
+    category: 'GIFT_CARD',
+    triggerPhrases: ['gift card', 'gift certificate', 'redeem', 'voucher', 'store credit', 'redeem code', 'gift code', 'gift balance'],
+    whenToUse: [
+      'Customer asks how to redeem a gift card or gift certificate',
+      'Customer asks where a gift certificate can be used',
+      'Customer asks about gift card balance',
+    ],
+    doNotUseWhen: [
+      'Customer wants a refund to a gift card — use Refund Request Workflow',
+    ],
+    requiredInfo: ['Gift certificate amount', 'Gift certificate code'],
+    systemChecks: ['ZENDESK'],
+    steps: [
+      { stepNumber: 1, title: 'Confirm the certificate amount and code', description: 'Verify the value and code to share with the customer.', agentAction: 'Insert [Amount] and [Code].', isRequired: true },
+      { stepNumber: 2, title: 'Explain where it can be redeemed', description: 'Redeemable for club items at teams.capellisport.com and for equipment/fitness products via the CSEQP / CSFIT links.', isRequired: true },
+      { stepNumber: 3, title: 'Note non-refundable policy if relevant', description: 'Gift cards are non-returnable and non-refundable.', isRequired: false },
+    ],
+    customerEmailTemplate: `Good morning/ Afternoon,
+
+Thank you for contacting Capelli Sport Customer Service. Please note that you can redeem your $[Amount] gift certificate – [Code] - for club items at teams.capellisport.com.
+
+In addition, this gift certificate can also be used to purchase Capelli Sport equipment and fitness products through the following links below -
+https://teams.capellisport.com/CSEQP
+https://teams.capellisport.com/CSFIT/
+
+Should you require further assistance, please don't hesitate to contact us.`,
+    internalNoteTemplate: `Gift certificate inquiry.
+Amount: $[Amount]  Code: [Code]
+Action: Provided redemption links (team shop + CSEQP/CSFIT).`,
+    preSendChecklist: [
+      { key: 'amount_code', label: 'Correct amount and code included', isRequired: true },
+    ],
+    zendeskTags: [
+      { tagName: 'general_inquiry', tagCategory: 'INQUIRY_TYPE', isRequired: true },
+    ],
+    ticketStatus: 'Solved',
+    ticketPriority: 'Normal',
+    escalationRules: [],
+    commonMistakes: ['Sharing the wrong code', 'Promising a cash refund for a gift card'],
+    doRules: ['Provide redemption links', 'Confirm the exact code and amount'],
+    dontRules: ['Do not refund gift cards to cash', 'Do not share an unrelated code'],
+    sourceNote: 'CS Templates — Gift Certificate Template; Return Policy (gift cards non-refundable).',
+    sortOrder: 32,
+  },
+
+  // ─── 33. Add Items to Existing Order ──────────────────────────────────────
+  {
+    workflowId: 'add_items',
+    name: 'Add Items to Existing Order Workflow',
+    category: 'ADD_ITEMS',
+    triggerPhrases: ['add items', 'add to my order', 'add an item', 'add another item', 'forgot to add', 'include another item', 'add socks', 'add to existing order', 'add more to my order', 'add a product'],
+    whenToUse: [
+      'Customer wants to add an item to an order they already placed',
+      'Customer forgot to include an item and wants it on the same order',
+    ],
+    doNotUseWhen: [
+      'Customer wants to change a size — use Order Change Workflow',
+      'Customer wants to cancel — use Order Cancellation Workflow',
+    ],
+    requiredInfo: ['Original order number', 'Item(s) the customer wants to add'],
+    systemChecks: ['ZENDESK', 'BIGCOMMERCE', 'SHOPIFY'],
+    steps: [
+      { stepNumber: 1, title: 'Explain items cannot be added to an existing order', description: 'Our system cannot add items to an order once placed.', isRequired: true },
+      { stepNumber: 2, title: 'Ask the customer to place a new order', description: 'Have the customer place a separate new order for the additional item(s).', isRequired: true },
+      { stepNumber: 3, title: 'Offer one-time shipping refund courtesy', description: 'As a one-time courtesy, ask the customer to reply with the new order number so shipping can be refunded.', agentAction: 'Request new order number; refund shipping on the new order (per policy).', isRequired: true },
+    ],
+    customerEmailTemplate: `Good morning/ Afternoon,
+
+Thank you for contacting Capelli Sport Customer Service. Unfortunately, we are unable to add items to existing orders. We apologize for any difficulty.
+
+However, as a one-time courtesy, please kindly respond to this E-Mail with your new order number included the [Item] so that we may refund your shipping.
+
+Your business is greatly appreciated!`,
+    internalNoteTemplate: `Add-items request (not possible).
+Original O#: [Order Number]
+Action: Advised to place new order; offered one-time shipping refund on new O#.`,
+    preSendChecklist: [
+      { key: 'courtesy', label: 'One-time shipping-refund courtesy offered', isRequired: true },
+    ],
+    zendeskTags: [
+      { tagName: 'order_adjustment', tagCategory: 'INQUIRY_TYPE', isRequired: true },
+    ],
+    ticketStatus: 'Pending',
+    ticketPriority: 'Normal',
+    escalationRules: [],
+    commonMistakes: ['Telling the customer we can add to the existing order', 'Refunding shipping before the new order is placed'],
+    doRules: ['Ask for the new order number', 'Refund shipping only as a one-time courtesy'],
+    dontRules: ['Do not add items to a placed order', 'Do not promise repeated courtesy refunds'],
+    sourceNote: 'CS Templates — Customer Trying to Add Items to Existing Order.',
+    sortOrder: 33,
+  },
+
+  // ─── 34. Returned to Sender / Address Correction ──────────────────────────
+  {
+    workflowId: 'returned_to_sender',
+    name: 'Returned to Sender / Address Correction Workflow',
+    category: 'RETURNED_TO_SENDER',
+    triggerPhrases: ['returned to sender', 'addressee unknown', 'insufficient address', 'undeliverable', 'came back', 'wrong address', 'update my address', 'change my address', 'fix my address', 'apartment number'],
+    whenToUse: [
+      'Fulfillment center reports an order was returned to sender',
+      'Order returned due to insufficient address or addressee unknown',
+      'Customer needs to correct/confirm a shipping address so we can reship',
+    ],
+    doNotUseWhen: [
+      'Package is still in transit / not moving — use Tracking Not Moving Workflow',
+      'Package is lost or marked delivered but not received — use Lost / Delivered-Not-Received Workflow',
+    ],
+    requiredInfo: ['Order number', 'Address currently on file', 'Corrected/confirmed shipping address'],
+    systemChecks: ['ZENDESK', 'BIGCOMMERCE', 'SHOPIFY', 'SAP'],
+    steps: [
+      { stepNumber: 1, title: 'Confirm the return-to-sender reason', description: 'Check FC notes for the reason (insufficient address / addressee unknown).', isRequired: true },
+      { stepNumber: 2, title: 'Share the address on file and ask the customer to confirm/correct', description: 'Provide the current address and request confirmation or a correction.', agentAction: 'Insert [Order Number] and [Customer Address].', isRequired: true },
+      { stepNumber: 3, title: 'Update the address and reship', description: 'Once confirmed, update the address (BC/Shopify + SAP) and request a reship.', warning: 'Confirm SAP updated after the address change.', isRequired: true },
+    ],
+    customerEmailTemplate: `Good morning/ Afternoon,
+
+Thank you for contacting Capelli Sport Customer Service. We are reaching out to you in regards to your order number [Order Number].
+
+Our fulfillment center has advised that your order was returned back to us due to (an insufficient address/ addressee unknown). The address we currently have on file is:
+
+[Customer Address]
+
+Please advise if this is the correct shipping address, so we may reship your order.`,
+    internalNoteTemplate: `Returned to sender.
+O#: [Order Number]
+Reason: [insufficient address / addressee unknown]
+Address on file: [Customer Address]
+Action: Requested confirmation/correction; reship after confirmation.`,
+    preSendChecklist: [
+      { key: 'address_on_file', label: 'Address on file included for confirmation', isRequired: true },
+    ],
+    zendeskTags: [
+      { tagName: 'return_to_sender', tagCategory: 'ISSUE_TYPE', isRequired: true },
+      { tagName: 'reship', tagCategory: 'ACTION', isRequired: false },
+    ],
+    ticketStatus: 'Pending',
+    ticketPriority: 'High',
+    escalationRules: [
+      { triggerReason: 'Customer unreachable for address confirmation', escalateTo: 'Team Leader', details: 'After 3 attempts with no response, follow closure policy.' },
+    ],
+    commonMistakes: ['Reshipping to the same bad address', 'Not updating SAP after the address change'],
+    doRules: ['Confirm the corrected address before reshipping', 'Update both BC/Shopify and SAP'],
+    dontRules: ['Do not reship without address confirmation'],
+    sourceNote: 'CS Templates — Confirm Shipping Address for Returned Order; Training Manual (address update).',
+    sortOrder: 34,
+  },
+
+  // ─── 35. Lost / Marked Delivered Not Received ─────────────────────────────
+  {
+    workflowId: 'lost_shipment',
+    name: 'Lost / Delivered-Not-Received Workflow',
+    category: 'LOST_SHIPMENT',
+    triggerPhrases: ['marked delivered', 'says delivered', 'shows delivered', 'never received', 'never arrived', 'didnt arrive', 'did not arrive', 'lost package', 'package lost', 'stolen', 'stuck in transit', 'lost in transit', 'where is my package'],
+    whenToUse: [
+      'Tracking shows delivered but the customer did not receive the package',
+      'Carrier marked the shipment lost or stuck in transit',
+      'Package appears lost after leaving the warehouse',
+    ],
+    doNotUseWhen: [
+      'Order simply has not shipped yet — use Order Status / Processing Time',
+      'Order was returned to sender — use Returned to Sender Workflow',
+    ],
+    requiredInfo: ['Order number', 'Tracking number', 'Shipping address', 'Date marked delivered (if applicable)'],
+    systemChecks: ['ZENDESK', 'SAP', 'BIGCOMMERCE'],
+    steps: [
+      { stepNumber: 1, title: 'Check tracking and SAP', description: 'Review the carrier tracking and SAP/BC status to confirm the lost/delivered-not-received situation.', isRequired: true },
+      { stepNumber: 2, title: 'Acknowledge and open an investigation with fulfillment/carrier', description: 'Tell the customer you are checking with the fulfillment center; do not promise a reship/refund before confirming.', isRequired: true },
+      { stepNumber: 3, title: 'Follow up within 2–3 business days', description: 'Provide an update once the carrier/FC responds; reship or refund per outcome and supervisor approval.', warning: 'Do not promise a ship date or refund before fulfillment confirms.', isRequired: true },
+    ],
+    customerEmailTemplate: `Good Morning,
+
+Thank you for contacting Capelli Sport Customer Service. We understand your concern, and we apologize for the delay. We are currently checking with our fulfillment center and will provide you with an update on your order number [Order Number] within the next 2-3 business days.
+
+Your patience and understanding is greatly appreciated.`,
+    internalNoteTemplate: `Lost / delivered-not-received.
+O#: [Order Number]  Tracking: [Tracking Number]
+Status: [marked delivered / lost / stuck in transit]
+Action: Opened investigation with FC/carrier; follow up in 2-3 business days.`,
+    preSendChecklist: [
+      { key: 'no_overpromise', label: 'No reship/refund promised before FC confirms', isRequired: true },
+      { key: 'followup', label: 'Follow-up date set (2–3 business days)', isRequired: true },
+    ],
+    zendeskTags: [
+      { tagName: 'lost_shipment', tagCategory: 'ISSUE_TYPE', isRequired: true },
+      { tagName: 'stuck_lost_in_transit', tagCategory: 'ISSUE_TYPE', isRequired: false },
+    ],
+    ticketStatus: 'Open',
+    ticketPriority: 'High',
+    escalationRules: [
+      { triggerReason: 'Carrier confirms lost shipment', escalateTo: 'Supervisor', details: 'Reship or refund requires supervisor approval.' },
+    ],
+    commonMistakes: ['Promising a reship before the carrier/FC investigation', 'Treating a not-yet-shipped order as lost'],
+    doRules: ['Verify tracking + SAP first', 'Open an FC/carrier investigation', 'Follow up within 2–3 business days'],
+    dontRules: ['Do not promise reship/refund before confirmation'],
+    sourceNote: 'CS Templates — ETA / checking with fulfillment; Zendesk Tags (Lost Shipment / Stuck in Transit).',
+    sortOrder: 35,
+  },
+
+  // ─── 36. Discount / Promo Code ────────────────────────────────────────────
+  {
+    workflowId: 'discount_code',
+    name: 'Discount / Promo Code Workflow',
+    category: 'DISCOUNT_CODE',
+    triggerPhrases: ['discount', 'promo', 'promo code', 'coupon', 'coupon code', 'discount code', 'promotion', 'sale', 'code not working', 'military discount', 'first responder', 'newsletter'],
+    whenToUse: [
+      'Customer asks if there is a discount, coupon, or promo code',
+      'Customer says a discount/promo code is not working',
+      'Customer asks about the military discount',
+    ],
+    doNotUseWhen: [
+      'Customer wants a refund of a coupon amount — use Refund Request Workflow',
+      'Item out of stock with courtesy coupon — handle via Out of Stock Workflow',
+    ],
+    requiredInfo: ['Whether the customer is asking about a general promo or a specific code', 'For military discount: proof of eligibility'],
+    systemChecks: ['ZENDESK'],
+    steps: [
+      { stepNumber: 1, title: 'Determine the request type', description: 'General discount availability vs. a code not applying vs. military discount.', isRequired: true },
+      { stepNumber: 2, title: 'For general promos: advise none currently + newsletter', description: 'Advise no current promotions and invite the customer to sign up for the newsletter for future offers.', isRequired: true },
+      { stepNumber: 3, title: 'For military discount: request proof, then advise terms', description: 'Request a photo of military/veteran ID; military discount is 10% off the first order.', isRequired: false },
+    ],
+    customerEmailTemplate: `Good morning/Afternoon,
+
+Thank you for contacting Capelli Sport Customer Service. Unfortunately, we are not offering any discounts or promotions at the moment. We greatly appreciate your understanding and business.
+
+However, if you sign up for our newsletter, you'll be the first to know about any upcoming promotions and discounts for your club.
+
+Your patience and understanding are greatly appreciated.`,
+    internalNoteTemplate: `Discount/promo inquiry.
+Type: [general / code not working / military]
+Action: Advised no current promo + newsletter (or military discount steps).`,
+    preSendChecklist: [
+      { key: 'newsletter', label: 'Newsletter mentioned for future offers', isRequired: false },
+    ],
+    zendeskTags: [
+      { tagName: 'general_inquiry', tagCategory: 'INQUIRY_TYPE', isRequired: true },
+    ],
+    ticketStatus: 'Solved',
+    ticketPriority: 'Normal',
+    escalationRules: [],
+    commonMistakes: ['Inventing a discount code', 'Applying the military discount without proof of eligibility'],
+    doRules: ['Be honest about current promotions', 'Request proof for the military discount'],
+    dontRules: ['Do not create or share unauthorized codes'],
+    sourceNote: 'CS Templates — No Discount Code / Newsletter; Military Discount templates.',
+    sortOrder: 36,
+  },
 ];
