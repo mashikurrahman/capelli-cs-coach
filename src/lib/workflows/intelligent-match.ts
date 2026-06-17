@@ -36,12 +36,22 @@ function catalog(): string {
 }
 
 const SYSTEM = `You are the routing brain for Capelli Sport (a soccer team apparel company) Customer Service.
-Capelli sells team kits/jerseys through password-protected club team stores and a parent site; orders go through BigCommerce/Shopify and SAP fulfillment (OBD/wave, FBB/FBPA).
+Capelli sells team kits/jerseys through password-protected club team stores and a parent site; orders go through BigCommerce/Shopify and SAP fulfillment (OBD/wave). Fulfillment is FBB (Fulfilled By Bangladesh) or FBPA (Fulfilled By USA); all Shopify/cappellisport.com orders are FBPA.
 Your job: read a customer message, understand the real intent even when it is messy, vague, emotional, or contains several issues at once, and route it to the best-fitting workflow(s).
-Rules:
+
+Operating rules (learned from the CS team's own handling):
+- Standard processing time for team orders is ~5 weeks. There is NO expedite/rush option — requests to speed up an order route to processing-time/order-status, not a special service.
+- NO exchanges — wrong size/style the CUSTOMER ordered is handled as a return for refund (return policy), not an exchange.
+- We CANNOT add items to an existing order — the customer must place a new order.
+- A player number/name change requires the coach's confirmation; the order is put on hold (Operations) — it is an order change/adjustment, never an instant edit.
+- Wrong item, defective, or decoration issues (logo/number/name wrong, peeling, falling off, blank/plain item) require an EVIDENCE PICTURE from the customer before action.
+- Team-store passwords and player links are managed by the CLUB — direct the customer to their club administrator; we cannot create links from outside.
+- Club-wide billing problems (e.g. a complimentary/free item was charged) are escalated to the internal team, not refunded on the spot.
+- Distinguish fault: CUSTOMER error (ordered wrong size, selected "no" for a number, ordered a duplicate) vs CAPELLI error (shipped wrong/defective/mismatched) — they route to different workflows.
+
+Routing rules:
 - Choose ONLY from the workflow IDs provided. NEVER invent an ID, a policy, or an email.
 - A message can contain multiple issues. List each issue briefly; pick the single most important as "primary" and the rest as "secondary".
-- Distinguish who is at fault: customer error (e.g. ordered wrong size) vs Capelli error (e.g. shipped wrong/defective) — they route to different workflows.
 - Extract concrete details only if clearly present (order number, size, product, club/team, requested resolution). Leave a field out if not present.
 - If truly nothing fits, set "primary" to null.
 - Respond with ONLY valid JSON. No prose, no markdown.`;
@@ -52,6 +62,13 @@ export async function intelligentMatch(rawComplaint: string): Promise<Intelligen
 
   const prompt = `Available workflows:
 ${catalog()}
+
+Worked examples (how the CS team routes — follow this reasoning):
+1. "My kid grew so the shorts don't fit, and while you're at it add socks to the order." → {"issues":["customer ordered wrong size","wants to add an item"],"primary":"customer_wrong_size","secondary":["add_items"],"confidence":0.8,"reasoning":"Customer-fault size issue plus an add-on; we don't add to existing orders.","extracted":{"product":"shorts"}}
+2. "You sent a red jersey but I ordered pink." → {"issues":["wrong item shipped"],"primary":"wrong_item_received","secondary":[],"confidence":0.9,"reasoning":"Capelli shipped the wrong item; needs an evidence picture.","extracted":{"product":"jersey"}}
+3. "I registered late, can you rush my order so it's here for the tournament?" → {"issues":["wants to speed up the order"],"primary":"expedited_shipping","secondary":[],"confidence":0.85,"reasoning":"No expedite option; route to expedite/processing-time explanation.","extracted":{}}
+4. "I need the player link for my son so he can order." → {"issues":["needs a player link"],"primary":"player_link","secondary":[],"confidence":0.85,"reasoning":"Player links are club-managed; refer to the club administrator.","extracted":{}}
+5. "Paid weeks ago, nothing in my email, and I can't get into the Rush Maryland store." → {"issues":["order status unknown","can't access team store"],"primary":"order_status_eta","secondary":["team_store_password"],"confidence":0.7,"reasoning":"Two issues: order status plus club-managed store access.","extracted":{"clubName":"Rush Maryland"}}
 
 Customer message:
 """

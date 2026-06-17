@@ -4,11 +4,15 @@ import { useMemo, useState } from 'react';
 import {
   CheckCircle2, Circle, AlertTriangle, ArrowLeft, ListChecks, Mail,
   Tag, ShieldCheck, ThumbsUp, ThumbsDown, Search, ClipboardList, Copy, Check,
+  PlaySquare, ChevronDown, Camera, ArrowUpRight, Flag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import TemplateFiller from '@/components/email-templates/TemplateFiller';
 import { matchTemplates, type TemplateLite } from '@/lib/workflows/match';
 import type { WorkflowDefinition } from '@/lib/workflows/default-workflows';
+import { getGuideForWorkflow } from '@/lib/guides/guides';
+import { getDecisionHint } from '@/lib/workflows/decision-hints';
+import VisualGuide from '@/components/guides/VisualGuide';
 
 interface Props {
   workflow: WorkflowDefinition;
@@ -39,6 +43,10 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateLite | null>(null);
   const [templateSearch, setTemplateSearch] = useState('');
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+
+  const guide = getGuideForWorkflow(workflow.workflowId);
+  const hint = getDecisionHint(workflow.workflowId);
 
   const suggested = useMemo(
     () => matchTemplates(complaint, workflow, templates, 6),
@@ -86,6 +94,69 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
           </div>
         </div>
       </div>
+
+      {/* Visual guide (from the training video) — shown when one exists for this workflow */}
+      {guide && (
+        <div className="rounded-xl border border-capelli-navy/30 bg-blue-50/50 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowGuide(s => !s)}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-blue-50 transition-colors"
+          >
+            <span className="flex items-center gap-2.5 min-w-0">
+              <PlaySquare className="w-5 h-5 text-capelli-navy flex-shrink-0" />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-capelli-navy">Visual guide: how the team handles this</span>
+                <span className="block text-xs text-gray-500 truncate">{guide.steps.length} steps · real screenshots from training</span>
+              </span>
+            </span>
+            <ChevronDown className={cn('w-4 h-4 text-capelli-navy flex-shrink-0 transition-transform', showGuide && 'rotate-180')} />
+          </button>
+          {showGuide && (
+            <div className="px-4 pb-4">
+              <VisualGuide guide={guide} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* How the team closes this (decision guidance learned from the training video) */}
+      {hint && (hint.requiresEvidencePicture || hint.escalateTo || hint.status || hint.notes.length > 0) && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 mb-2">
+            <Flag className="w-3.5 h-3.5" /> How the team closes this
+          </p>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {hint.requiresEvidencePicture && (
+              <span className="inline-flex items-center gap-1 text-xs bg-amber-100 border border-amber-200 text-amber-800 rounded-full px-2.5 py-0.5">
+                <Camera className="w-3 h-3" /> Request evidence picture first
+              </span>
+            )}
+            {hint.escalateTo && (
+              <span className="inline-flex items-center gap-1 text-xs bg-white border border-indigo-200 text-indigo-800 rounded-full px-2.5 py-0.5">
+                <ArrowUpRight className="w-3 h-3" /> Escalate to {hint.escalateTo}
+              </span>
+            )}
+            {hint.status && (
+              <span className="inline-flex items-center gap-1 text-xs bg-white border border-indigo-200 text-indigo-800 rounded-full px-2.5 py-0.5">
+                Set status: <span className="font-semibold capitalize">{hint.status}</span>
+              </span>
+            )}
+            {hint.fault && hint.fault !== 'none' && (
+              <span className="inline-flex items-center gap-1 text-xs bg-white border border-indigo-200 text-indigo-800 rounded-full px-2.5 py-0.5">
+                Fault: <span className="font-semibold capitalize">{hint.fault === 'capelli' ? 'Capelli error' : 'Customer error'}</span>
+              </span>
+            )}
+          </div>
+          {hint.notes.length > 0 && (
+            <ul className="space-y-1">
+              {hint.notes.map((n, i) => (
+                <li key={i} className="text-xs text-indigo-900/80 leading-snug">• {n}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Do / Don't guardrails */}
       {(workflow.doRules.length > 0 || workflow.dontRules.length > 0) && (

@@ -8,7 +8,7 @@ import { getInitials } from '@/lib/utils/helpers';
 import {
   Bot, BookOpen, FileText, Search, GraduationCap, ShieldCheck,
   LayoutDashboard, Settings, LogOut, ChevronLeft, ChevronRight,
-  Upload, Users, BarChart3,
+  Upload, Users, BarChart3, MonitorPlay,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -45,6 +45,7 @@ const sections: NavSection[] = [
   {
     label: 'Learn & QA',
     items: [
+      { href: '/guides', label: 'Visual Guides', icon: <MonitorPlay className="w-4 h-4" /> },
       { href: '/training', label: 'Training Mode', icon: <GraduationCap className="w-4 h-4" /> },
       { href: '/qa-review', label: 'QA Review', icon: <ShieldCheck className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'QA'] },
     ],

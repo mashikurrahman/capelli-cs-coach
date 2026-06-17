@@ -34,4 +34,13 @@ coverage/
 *.log
 tsconfig.tsbuildinfo
 
-.vercel
+# Training video media (keep scripts/README, ignore the heavy files)
+training-videos/**/*.mp4
+training-videos/**/*.mov
+training-videos/**/*.mkv
+training-videos/**/*.webm
+training-videos/**/*.mp3
+training-videos/**/*.wav
+training-videos/**/*.srt
+training-videos/**/*.png
+*.zip

@@ -2,6 +2,11 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'mammoth', '@prisma/client', 'exceljs'],
+    // Ensure the auth-gated guide screenshots ship with the serverless function
+    // that serves them (they live outside /public so they stay behind login).
+    outputFileTracingIncludes: {
+      '/api/guides/asset': ['./content/guides/**/*'],
+    },
   },
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '**' }],
