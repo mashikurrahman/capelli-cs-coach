@@ -341,6 +341,53 @@ const REPLACEMENT_GUIDE: Guide = {
   ],
 };
 
+const EXPEDITE_GUIDE: Guide = {
+  id: 'expedited-shipping',
+  title: 'Expedite Request (we don’t expedite)',
+  scenario: 'A customer asks to speed up / rush their order.',
+  summary: 'There is no expedite option. Confirm the order status, explain the 5-week processing time, and set Solved.',
+  workflowIds: ['expedited_shipping'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer is asking for an expedite option (often due to a late registration).', narration: 'I have a client asking about an expedite option for his order.', image: '01-read-request.png', timestamp: '23:59' },
+    { n: 2, title: 'Apply the rule: no expedite', instruction: 'We don’t offer any expedite option. Orders placed from team stores need ~5 weeks to be fulfilled and shipped.', narration: 'We don’t have any expedite option. Orders placed from teams need five weeks to be fulfilled and shipped.', image: '02-no-expedite-rule.png', timestamp: '24:18' },
+    { n: 3, title: 'Check for duplicates', instruction: 'Copy the order number into Search and scan the right panel; merge any duplicate tickets.', narration: 'We check if there is any duplicate ticket — copy the order number and paste it in the search box.', image: '03-check-duplicates.png', timestamp: '25:18' },
+    { n: 4, title: 'Confirm FBB vs FBPA', instruction: 'Look the order up in the FBB Orders Excel — here it’s not found, so it’s FBPA.', narration: 'We search the order number on our Excel to see if it’s FBB or FBPA — this order is FBPA.', image: '04-fbb-fbpa.png', timestamp: '26:05' },
+    { n: 5, title: 'Check BigCommerce, inbox & SAP', instruction: 'Confirm status across BigCommerce, the email inbox, and SAP (VA05). Here the order is new — awaiting fulfillment, not shipped.', narration: 'We check BC, the email inbox and SAP — the order is new, awaiting fulfillment, not shipped.', image: '05-check-systems.png', timestamp: '27:30' },
+    { n: 6, title: 'Reply to the customer', instruction: 'Explain the order is awaiting fulfillment, we don’t offer expedite, and processing is ~5 weeks; they’ll get a tracking email once it ships.', narration: 'We tell the customer the order is awaiting fulfillment, we don’t offer expedite, and the processing time is five weeks.', image: '06-reply.png', timestamp: '28:50' },
+    { n: 7, title: 'Set Solved', instruction: 'Everything is clarified and nothing is pending — submit as Solved.', narration: 'Everything is clarified, so we submit the ticket as solved.', image: '07-solved.png', timestamp: '30:30' },
+  ],
+};
+
+const WEBSITE_GUIDE: Guide = {
+  id: 'website-checkout',
+  title: 'Can’t Access Cart / Complete Checkout',
+  scenario: 'A customer can’t add to cart or complete their order on the site.',
+  summary: 'Required kit items must stay in the cart. Check the customer’s emails — if they already ordered, confirm processing time and set Solved.',
+  workflowIds: ['website_issue'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer keeps adding the kit to the cart but can’t access the cart or complete the order.', narration: 'I’m trying to order kits for my boys and added them to my cart, but I can’t access my cart or complete my order.', image: '01-read-request.png', timestamp: '95:44' },
+    { n: 2, title: 'Apply the rule: mandatory kit', instruction: 'Per the club agreement, required kit items must be purchased — removing a required item from the cart breaks checkout.', narration: 'Per our agreement with the club, the required kit items must be purchased — removing a required item breaks checkout.', image: '02-mandatory-kit-rule.png', timestamp: '96:10' },
+    { n: 3, title: 'Check the customer’s emails', instruction: 'Always check the customer’s emails — here we see they placed an order yesterday, so the issue is already resolved.', narration: 'We always check the customer’s emails — here we see they placed an order, so the issue is resolved.', image: '03-check-emails.png', timestamp: '96:40' },
+    { n: 4, title: 'Reply with processing time', instruction: 'Confirm the order is placed and awaiting fulfillment with a ~5-week processing time.', narration: 'We’re happy you placed an order; your order is awaiting fulfillment with a five-week processing time.', image: '04-processing-reply.png', timestamp: '97:50' },
+    { n: 5, title: 'Set Solved', instruction: 'The order went through — submit as Solved.', narration: 'Issue resolved — submit as solved.', image: '05-solved.png', timestamp: '98:38' },
+  ],
+};
+
+const ESCALATION_GUIDE: Guide = {
+  id: 'complimentary-charged',
+  title: 'Complimentary Item Charged → Escalate',
+  scenario: 'A club’s complimentary/free item was charged on a mandatory-kit order.',
+  summary: 'Known club-wide billing issue — escalate to Dan (internal department), tell the customer the right team is engaged, and set Open.',
+  workflowIds: ['escalation'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The club (SOCA) has a complimentary hoodie, but customers were charged for it on the mandatory-kit order.', narration: 'This club has a complimentary hoodie, but customers were charged for it when placing the mandatory kit order.', image: '01-read-request.png', timestamp: '99:08' },
+    { n: 2, title: 'Forward the case to Dan', instruction: 'Many customers report the same issue — forward the case to Dan to advise how to resolve it.', narration: 'Many customers report the same issue, so we forward this case to Dan.', image: '02-forward-to-dan.png', timestamp: '99:39' },
+    { n: 3, title: 'Set the tags', instruction: 'Tags: non-FBB club, general inquiry, internal department.', narration: 'Tags: non-FBB club, general inquiry, internal department.', image: '03-set-tags.png', timestamp: '100:02' },
+    { n: 4, title: 'Reply + set Open', instruction: 'Tell the customer the appropriate department has been contacted and you’ll keep them updated; submit as Open with an internal note.', narration: 'We’ve contacted the appropriate department and will keep you updated; submit as open.', image: '04-reply-open.png', timestamp: '100:21' },
+    { n: 5, title: 'Email Dan', instruction: 'Email Dan with the details. Once he replies (refund/cancel the hoodie), solve the ticket; until then it stays Open.', narration: 'We email Dan; once he replies we solve it — for now it stays open.', image: '05-email-dan.png', timestamp: '100:45' },
+  ],
+};
+
 // Each step has a short clip named like its image (01-open-ticket.png → .mp4).
 function attachVideos(g: Guide): Guide {
   return {
@@ -354,6 +401,9 @@ export const GUIDES: Guide[] = [
   PLAYER_NUMBER_GUIDE,
   CANCELLATION_GUIDE,
   REPLACEMENT_GUIDE,
+  EXPEDITE_GUIDE,
+  WEBSITE_GUIDE,
+  ESCALATION_GUIDE,
 ].map(attachVideos);
 
 export function getGuide(id: string): Guide | undefined {
