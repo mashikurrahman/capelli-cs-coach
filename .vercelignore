@@ -1,0 +1,5 @@
+# Source training media (the 6.5 GB recording etc.) — never upload to Vercel.
+# The in-app guide clips/posters under content/guides ARE deployed (small).
+training-videos
+*.zip
+.next
