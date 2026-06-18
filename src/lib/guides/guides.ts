@@ -388,6 +388,50 @@ const ESCALATION_GUIDE: Guide = {
   ],
 };
 
+const WRONG_ITEM_GUIDE: Guide = {
+  id: 'wrong-item-evidence',
+  title: 'Wrong / Defective Item → Evidence Picture',
+  scenario: 'Customer received the wrong or a blank/defective item (e.g. a plain shirt with no logo).',
+  summary: 'Capelli error — request an evidence picture of the wrong item first, then set Pending until they send it.',
+  workflowIds: ['wrong_item_received'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer received a plain white shirt with no logo/design and wants a refund or the correct shirt.', narration: 'There is an issue with the jersey — no logo, no design, just a plain white shirt. I would like my money back or the correct shirt.', image: '01-read-request.png', timestamp: '59:08' },
+    { n: 2, title: 'Apply the rule: ask for an evidence picture', instruction: 'For a wrong/defective item we first request an evidence picture. This is a Shopify order, so it’s FBPA.', narration: 'First we ask the customer to send an evidence picture of the wrong item received.', image: '02-evidence-rule.png', timestamp: '59:40' },
+    { n: 3, title: 'Open the evidence-picture macro', instruction: 'Go to macros and apply the “evidence picture / wrong item received” template.', narration: 'We apply the evidence picture macro — wrong item received.', image: '03-evidence-macro.png', timestamp: '60:30' },
+    { n: 4, title: 'Fill and send the reply', instruction: 'The template asks the customer to submit clear pictures of the wrong item so we can assist.', narration: 'For our records and to better assist you, kindly submit clear pictures of the wrong item.', image: '04-fill-reply.png', timestamp: '60:58' },
+    { n: 5, title: 'Set Pending', instruction: 'Submit as Pending — we’re waiting on the customer’s picture before we can act.', narration: 'We submit the ticket as pending while we wait for the picture.', image: '05-set-pending.png', timestamp: '61:16' },
+  ],
+};
+
+const MISSING_NUMBER_GUIDE: Guide = {
+  id: 'missing-number',
+  title: 'Missing Player Number (Customer Error)',
+  scenario: 'Customer says their item is missing the player number they expected.',
+  summary: 'If they selected “No” for the number at checkout, it’s a customer error — no action; they can reorder + return.',
+  workflowIds: ['missing_item'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The backpack has no player number; the customer says they paid for number 15 and attached a picture.', narration: 'Our backpack doesn’t have the number on it that we paid for — the missing number is 15.', image: '01-read-request.png', timestamp: '61:48' },
+    { n: 2, title: 'Check the order', instruction: 'Open the order (Washington Premier, an FBB club). At checkout the customer selected “No” for adding the player number.', narration: 'We check the order — at checkout they selected “No” for adding the player number.', image: '02-check-order.png', timestamp: '62:18' },
+    { n: 3, title: 'Identify it as a customer error', instruction: 'Selecting “No” means the number was never added — this is a customer error, not a defect.', narration: 'Selecting “No” means the number wasn’t added — this is a customer error.', image: '03-customer-error.png', timestamp: '64:25' },
+    { n: 4, title: 'Reply explaining the selection', instruction: 'Tell the customer that during ordering “No” was selected, so the backpack shipped without the number.', narration: 'After reviewing your order we noticed that during ordering you selected No, so it shipped without the number.', image: '04-reply-no-action.png', timestamp: '65:00' },
+    { n: 5, title: 'Set Solved', instruction: 'No action on our side (customer error) — Solved. They can reorder the backpack and return the wrong one.', narration: 'There’s no action and it’s a customer error — solved. They can reorder and return the wrong one.', image: '05-solved.png', timestamp: '65:30' },
+  ],
+};
+
+const RETURN_GUIDE: Guide = {
+  id: 'return-no-exchange',
+  title: 'Return Request (we don’t exchange)',
+  scenario: 'Customer ordered the wrong style/size themselves and wants to exchange it.',
+  summary: 'We don’t do exchanges — send the return policy so they can return it for a refund, then Solved.',
+  workflowIds: ['return_exchange'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer ordered a youth shirt instead of a men’s, placed a new order for the men’s, and wants to return/exchange the wrong one.', narration: 'I ordered a youth shirt instead of a men’s — I want to exchange this one.', image: '01-read-request.png', timestamp: '66:02' },
+    { n: 2, title: 'Apply the rule: no exchanges', instruction: 'We don’t do exchanges — we only accept returns for a refund.', narration: 'We don’t do exchanges — we only return the items for a refund.', image: '02-no-exchange-rule.png', timestamp: '66:34' },
+    { n: 3, title: 'Send the return policy', instruction: 'Apply the return-policy template (Shopify = FBPA, general inquiry, return policy).', narration: 'We send the return policy template so they can return the item for a refund.', image: '03-return-policy-reply.png', timestamp: '67:00' },
+    { n: 4, title: 'Set Solved', instruction: 'Once the return policy is sent, the ticket is Solved from our side.', narration: 'This is solved from us once the return policy is sent.', image: '04-solved.png', timestamp: '67:22' },
+  ],
+};
+
 // Each step has a short clip named like its image (01-open-ticket.png → .mp4).
 function attachVideos(g: Guide): Guide {
   return {
@@ -404,6 +448,9 @@ export const GUIDES: Guide[] = [
   EXPEDITE_GUIDE,
   WEBSITE_GUIDE,
   ESCALATION_GUIDE,
+  WRONG_ITEM_GUIDE,
+  MISSING_NUMBER_GUIDE,
+  RETURN_GUIDE,
 ].map(attachVideos);
 
 export function getGuide(id: string): Guide | undefined {
