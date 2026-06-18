@@ -2,6 +2,7 @@ import { matchWorkflows, matchTemplates, renderBody, derivePlaceholders, setSyno
 
 const APP_URL = 'https://bdcsteamassistant.vercel.app';
 const TEMPLATES_ENDPOINT = `${APP_URL}/api/public/templates`;
+const MATCH_ENDPOINT = `${APP_URL}/api/public/match`;
 
 const view = document.getElementById('view');
 const syncStatus = document.getElementById('sync-status');
@@ -9,6 +10,7 @@ const homeBtn = document.getElementById('home-btn');
 
 let WORKFLOWS = [];
 let TEMPLATES = [];
+let DECISION_HINTS = {};
 
 const esc = (s) =>
   (s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -23,6 +25,48 @@ async function loadWorkflows() {
     const res = await fetch(chrome.runtime.getURL('data/synonyms.json'));
     setSynonyms(await res.json());
   } catch { /* synonyms optional */ }
+  try {
+    const res = await fetch(chrome.runtime.getURL('data/decision-hints.json'));
+    DECISION_HINTS = await res.json();
+  } catch { /* hints optional */ }
+}
+
+// Ask the web app's intelligent matcher (keyword + embedding + LLM brain) to
+// route a complaint. Returns null on any failure so we fall back to the local
+// keyword matcher — the extension still works fully offline.
+async function smartMatch(complaint) {
+  try {
+    const res = await fetch(MATCH_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ complaint }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data.matches) || !data.matches.length) return null;
+    const matches = data.matches
+      .map((m) => {
+        const workflow = WORKFLOWS.find((w) => w.workflowId === m.workflowId);
+        return workflow ? { workflow, matchedPhrases: m.matchedPhrases || [], method: m.method } : null;
+      })
+      .filter(Boolean);
+    return matches.length ? { matches, analysis: data.analysis || null } : null;
+  } catch { return null; }
+}
+
+// "How the team closes this" — decision guidance learned from the training video.
+function decisionHintHtml(wf) {
+  const h = DECISION_HINTS[wf.workflowId];
+  if (!h) return '';
+  const chips = [];
+  if (h.requiresEvidencePicture) chips.push('<span class="chip chip-warn">📷 Request evidence picture first</span>');
+  if (h.escalateTo) chips.push(`<span class="chip">↗ Escalate to ${esc(h.escalateTo)}</span>`);
+  if (h.status) chips.push(`<span class="chip">Set status: ${esc(h.status)}</span>`);
+  if (h.fault && h.fault !== 'none') chips.push(`<span class="chip">Fault: ${h.fault === 'capelli' ? 'Capelli error' : 'Customer error'}</span>`);
+  const notes = (h.notes || []).map((n) => `<li>${esc(n)}</li>`).join('');
+  if (!chips.length && !notes) return '';
+  return `<div class="section-label">How the team closes this</div>
+    <div class="box box-hint">${chips.join(' ')}${notes ? `<ul class="mt6">${notes}</ul>` : ''}</div>`;
 }
 
 async function loadTemplates() {
@@ -72,17 +116,34 @@ function renderInput(prefill = '') {
   document.getElementById('browse').onclick = () => renderBrowse();
 }
 
-function renderResults(complaint) {
+async function renderResults(complaint) {
   showHome(true);
-  const wfMatches = matchWorkflows(complaint, WORKFLOWS, 4);
+
+  // Instant local keyword matches, then upgrade with the AI brain if reachable.
+  const localMatches = matchWorkflows(complaint, WORKFLOWS, 4);
+  setView('<button id="back" class="back">← New complaint</button><div class="empty">Matching…</div>');
+  const bk = document.getElementById('back');
+  if (bk) bk.onclick = () => renderInput(complaint);
+
+  const smart = await smartMatch(complaint);
+  const wfMatches = (smart && smart.matches.length) ? smart.matches : localMatches;
+  const analysis = smart && smart.analysis ? smart.analysis : null;
   const tplMatches = matchTemplates(complaint, null, TEMPLATES.map(asTemplate), 5);
+
+  const aiHtml = analysis && ((analysis.issues && analysis.issues.length) || analysis.reasoning)
+    ? `<div class="ai-panel">
+         <div class="ai-h">✦ Understood by AI</div>
+         ${(analysis.issues || []).map((i) => `<span class="chip">${esc(i)}</span>`).join('')}
+         ${analysis.reasoning ? `<div class="ai-reason mt6">${esc(analysis.reasoning)}</div>` : ''}
+       </div>`
+    : '';
 
   const wfHtml = wfMatches.length
     ? wfMatches.map((m, i) => `
         <div class="card" data-wf="${i}">
           <div class="row"><span class="card-title">${esc(m.workflow.name)}</span>
             <span class="chip chip-cat">${esc((m.workflow.category || '').replace(/_/g, ' '))}</span></div>
-          <div class="mb6">${m.matchedPhrases.slice(0, 5).map((p) => `<span class="chip">${esc(p)}</span>`).join('')}</div>
+          <div class="mb6">${(m.matchedPhrases || []).slice(0, 5).map((p) => `<span class="chip">${esc(p)}</span>`).join('')}</div>
         </div>`).join('')
     : `<div class="empty">No workflow matched those words.<br/>Pick a template below or browse all.</div>`;
 
@@ -94,6 +155,7 @@ function renderResults(complaint) {
 
   setView(`
     <button id="back" class="back">← New complaint</button>
+    ${aiHtml}
     <div class="section-label">Suggested workflows</div>
     ${wfHtml}
     ${tplHtml ? `<div class="section-label">Matching email templates</div>${tplHtml}` : ''}
@@ -143,6 +205,8 @@ function renderWorkflow(wf, complaint) {
     <button id="back" class="back">← Back to matches</button>
     <div class="row"><h3 style="margin:0">${esc(wf.name)}</h3></div>
     <span class="chip chip-cat">${esc((wf.category || '').replace(/_/g, ' '))}</span>
+
+    ${decisionHintHtml(wf)}
 
     <div class="section-label">Steps to follow</div>
     ${steps || '<p class="small muted">No steps.</p>'}

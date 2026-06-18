@@ -120,6 +120,16 @@ label.fld { display: block; font-size: 11px; font-weight: 600; color: #475569; m
 }
 .subject { font-size: 11.5px; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; margin-bottom: 7px; }
 
+/* AI analysis + decision hints */
+.ai-panel { border: 1px solid #ddd6fe; background: #f5f3ff; border-radius: 9px; padding: 9px; margin-bottom: 8px; }
+.ai-panel .ai-h { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #7c3aed; margin-bottom: 4px; }
+.ai-panel .ai-reason { font-size: 11.5px; color: #475569; }
+.box-hint { border-color: #c7d2fe; background: #eef2ff; }
+.box-hint ul { margin: 6px 0 0; padding-left: 16px; }
+.box-hint li { font-size: 11.5px; margin-bottom: 3px; color: #3730a3; }
+.chip-warn { background: #fffbeb; color: #b45309; }
+.mt6 { margin-top: 6px; }
+
 .back { background: none; border: 0; color: var(--blue); cursor: pointer; font: inherit; padding: 0; margin-bottom: 10px; }
 .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
 .sticky-actions { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding-top: 10px; }

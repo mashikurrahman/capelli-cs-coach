@@ -7,6 +7,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { DEFAULT_WORKFLOWS } from '../src/lib/workflows/default-workflows';
 import { SYNONYMS } from '../src/lib/workflows/synonyms';
+import { VIDEO_SCENARIOS } from '../src/lib/training/video-scenarios';
 
 const outDir = join(process.cwd(), 'extension', 'data');
 mkdirSync(outDir, { recursive: true });
@@ -18,3 +19,20 @@ console.log(`Wrote ${DEFAULT_WORKFLOWS.length} workflows -> ${wfFile}`);
 const synFile = join(outDir, 'synonyms.json');
 writeFileSync(synFile, JSON.stringify(SYNONYMS, null, 0), 'utf8');
 console.log(`Wrote ${Object.keys(SYNONYMS).length} synonym groups -> ${synFile}`);
+
+// Decision hints ("how the team closes this") aggregated per workflow from the
+// labelled training-video scenarios — mirrors src/lib/workflows/decision-hints.ts.
+type Hint = { requiresEvidencePicture: boolean; escalateTo?: string; status?: string; fault?: string; notes: string[] };
+const hints: Record<string, Hint> = {};
+for (const s of VIDEO_SCENARIOS) {
+  const h = hints[s.workflowId] ?? { requiresEvidencePicture: false, notes: [] };
+  if (s.requiresEvidencePicture) h.requiresEvidencePicture = true;
+  if (s.escalateTo && !h.escalateTo) h.escalateTo = s.escalateTo;
+  if (!h.status) h.status = s.status;
+  if (!h.fault) h.fault = s.fault;
+  if (s.note && !h.notes.includes(s.note)) h.notes.push(s.note);
+  hints[s.workflowId] = h;
+}
+const hintFile = join(outDir, 'decision-hints.json');
+writeFileSync(hintFile, JSON.stringify(hints, null, 0), 'utf8');
+console.log(`Wrote ${Object.keys(hints).length} decision hints -> ${hintFile}`);
