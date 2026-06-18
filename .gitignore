@@ -44,3 +44,6 @@ training-videos/**/*.wav
 training-videos/**/*.srt
 training-videos/**/*.png
 *.zip
+
+# scratch probe frames
+content/_probe/
