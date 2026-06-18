@@ -432,6 +432,51 @@ const RETURN_GUIDE: Guide = {
   ],
 };
 
+const DEFECTIVE_GUIDE: Guide = {
+  id: 'defective-decoration',
+  title: 'Defective / Decoration Issue (number peeling)',
+  scenario: 'An item’s decoration is failing — e.g. the number is peeling off after a few wears.',
+  summary: 'Capelli quality issue — tag it a decoration issue, request an evidence picture of the defective item, and set Pending.',
+  workflowIds: ['damaged_defective'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer’s son wore the jersey a few times and the number is already falling off.', narration: 'My son wore his jersey three times and the number is already falling off. Can this be fixed?', image: '01-read-request.png', timestamp: '1:41:29' },
+    { n: 2, title: 'Check the order', instruction: 'Check the order first — here it shipped in May, all good.', narration: 'We check the order first — shipped in May, all is good.', image: '02-check-order.png', timestamp: '1:41:42' },
+    { n: 3, title: 'Set the tags', instruction: 'Tags: FBB orders, Decoration Issue, Evidence Picture (we want a photo of the defective item).', narration: 'Fill the tags: FBB orders, decoration issue, evidence picture.', image: '03-set-tags.png', timestamp: '1:41:54' },
+    { n: 4, title: 'Open the evidence-picture macro', instruction: 'Go to macros and apply the evidence-picture template.', narration: 'Go to macros — there’s an evidence picture template.', image: '04-evidence-macro.png', timestamp: '1:42:26' },
+    { n: 5, title: 'Fill and send the reply', instruction: 'Apologize, note products pass strict quality checks, and ask for a clear picture of the defective item.', narration: 'We are sorry the jersey is defective… kindly submit a clear picture of the defective item.', image: '05-fill-reply.png', timestamp: '1:42:46' },
+    { n: 6, title: 'Set Pending', instruction: 'Submit as Pending while we wait for the customer’s picture.', narration: 'We submit the ticket as pending while we wait for the picture.', image: '06-set-pending.png', timestamp: '1:43:09' },
+  ],
+};
+
+const PARTIAL_SHIPMENT_GUIDE: Guide = {
+  id: 'partial-shipment',
+  title: 'Partial Shipment / Order Held Up',
+  scenario: 'Some items shipped but the rest is held up (often because an extra piece was added).',
+  summary: 'Find the tracking + ETA in the inbox, verify in UPS, and reply with the FBB tracking template; set Solved.',
+  workflowIds: ['partial_shipment'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'Teammates received their jerseys but this order is held up — the customer asks which pieces are available.', narration: 'Other girls on the team have received the jersey, but ours is held up because we ordered an additional piece.', image: '01-read-request.png', timestamp: '1:07:24' },
+    { n: 2, title: 'Find the tracking + ETA', instruction: 'Search Outlook for the order’s tracking number (here the ETA is 6/18) and get the tracking number from the shipment Excel.', narration: 'We search Outlook for the tracking number — the order is expected to arrive by 6/18.', image: '02-find-tracking.png', timestamp: '1:07:55' },
+    { n: 3, title: 'Check the status in UPS', instruction: 'Paste the tracking number into UPS to confirm the status.', narration: 'We put the tracking number on UPS.', image: '03-ups-check.png', timestamp: '1:08:42' },
+    { n: 4, title: 'Apply the FBB tracking template', instruction: 'Inquiry: order status update, no action. Apply the FBB tracking macro — order departed the warehouse, in transit, with the UPS tracking number/link.', narration: 'Order status update, no action — apply the FBB tracking template: your order has departed our warehouse and is in transit.', image: '04-apply-template.png', timestamp: '1:08:55' },
+    { n: 5, title: 'Set Solved', instruction: 'Ask them to refer back if tracking doesn’t update; thank them and submit as Solved.', narration: 'If the tracking hasn’t updated, refer back to us. We appreciate your understanding — solved.', image: '05-solved.png', timestamp: '1:09:48' },
+  ],
+};
+
+const ADD_ITEMS_GUIDE: Guide = {
+  id: 'add-items',
+  title: 'Add Items to an Existing Order (we can’t)',
+  scenario: 'Customer wants to add items to an order they already placed.',
+  summary: 'We can’t add to an existing order — send the template and give them the individual items to order separately.',
+  workflowIds: ['add_items'],
+  steps: [
+    { n: 1, title: 'Read the request', instruction: 'The customer placed an order a few days ago and wants to add more items to it.', narration: 'I placed an order a few days ago — can I add two more jerseys to it?', image: '01-read-request.png', timestamp: '1:15:30' },
+    { n: 2, title: 'Apply the rule: can’t add', instruction: 'We are not able to add to any existing order — use the template for this.', narration: 'We are not able to add to any order — we use the template for this.', image: '02-cannot-add-rule.png', timestamp: '1:16:46' },
+    { n: 3, title: 'Pull the individual items', instruction: 'Copy the individual items from their order so the customer can order them separately.', narration: 'We copy the individual items so the customer can order them separately.', image: '03-individual-items.png', timestamp: '1:18:00' },
+    { n: 4, title: 'Reply with the template', instruction: 'Note that we’re unable to add items to an existing order, and provide the individual items to order.', narration: 'Please note that we are unable to add items to an existing order — here are the individual items.', image: '04-reply-template.png', timestamp: '1:18:30' },
+  ],
+};
+
 // Each step has a short clip named like its image (01-open-ticket.png → .mp4).
 function attachVideos(g: Guide): Guide {
   return {
@@ -451,6 +496,9 @@ export const GUIDES: Guide[] = [
   WRONG_ITEM_GUIDE,
   MISSING_NUMBER_GUIDE,
   RETURN_GUIDE,
+  DEFECTIVE_GUIDE,
+  PARTIAL_SHIPMENT_GUIDE,
+  ADD_ITEMS_GUIDE,
 ].map(attachVideos);
 
 export function getGuide(id: string): Guide | undefined {
