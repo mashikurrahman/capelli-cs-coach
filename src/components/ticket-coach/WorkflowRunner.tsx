@@ -44,9 +44,22 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
   const [templateSearch, setTemplateSearch] = useState('');
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [checkedGuards, setCheckedGuards] = useState<Record<string, boolean>>({});
 
   const guide = getGuideForWorkflow(workflow.workflowId);
   const hint = getDecisionHint(workflow.workflowId);
+
+  // Critical actions that must be confirmed before finishing — derived from the
+  // decision hint so the right guardrail shows for the right ticket.
+  const guardChecks = useMemo(() => {
+    const checks: { key: string; label: string }[] = [];
+    if (hint?.requiresEvidencePicture) checks.push({ key: 'evidence', label: 'Requested an evidence picture from the customer' });
+    if (hint?.status === 'open' || hint?.escalateTo) {
+      const who = hint?.escalateTo ? ` (escalated to ${hint.escalateTo})` : '';
+      checks.push({ key: 'open-note', label: `Set the ticket to Open and added an internal note${who}` });
+    }
+    return checks;
+  }, [hint]);
 
   const suggested = useMemo(
     () => matchTemplates(complaint, workflow, templates, 6),
@@ -65,6 +78,7 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
   const allRequiredDone = requiredSteps.every(s => checkedSteps[s.stepNumber]);
   const requiredPreSend = workflow.preSendChecklist.filter(c => c.isRequired);
   const allPreSendDone = requiredPreSend.every(c => checkedPreSend[c.key]);
+  const allGuardsDone = guardChecks.every(c => checkedGuards[c.key]);
   const doneCount = workflow.steps.filter(s => checkedSteps[s.stepNumber]).length;
   const progress = Math.round((doneCount / workflow.steps.length) * 100);
 
@@ -331,15 +345,33 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
         </Section>
       )}
 
+      {/* Critical guardrails — must confirm before finishing */}
+      {guardChecks.length > 0 && (
+        <Section icon={<ShieldCheck className="w-4 h-4" />} title="Confirm before finishing" hint="required">
+          <div className="space-y-2">
+            {guardChecks.map(c => {
+              const done = !!checkedGuards[c.key];
+              return (
+                <label key={c.key} className={cn('flex items-start gap-2.5 cursor-pointer rounded-lg border p-2.5 transition-colors', done ? 'border-green-200 bg-green-50/60' : 'border-amber-200 bg-amber-50/60')}>
+                  <input type="checkbox" checked={done} onChange={e => setCheckedGuards(s => ({ ...s, [c.key]: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-capelli-navy focus:ring-capelli-navy" />
+                  <span className="text-sm text-gray-800">{c.label} <span className="text-capelli-navy">*</span></span>
+                </label>
+              );
+            })}
+          </div>
+        </Section>
+      )}
+
       {/* Finish */}
       <div className="flex items-center justify-between gap-3 pt-2">
         <p className="text-xs text-gray-500">
-          {allRequiredDone && allPreSendDone ? 'All required steps complete.' : 'Complete required steps (*) to finish.'}
+          {allRequiredDone && allPreSendDone && allGuardsDone ? 'All required steps complete.' : 'Complete required steps (*) to finish.'}
         </p>
         <button
           type="button"
           onClick={onComplete}
-          disabled={!allRequiredDone || !allPreSendDone}
+          disabled={!allRequiredDone || !allPreSendDone || !allGuardsDone}
           className="inline-flex items-center gap-2 rounded-xl bg-capelli-navy px-5 py-2.5 text-sm font-medium text-white
                      hover:bg-capelli-navyLight disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
