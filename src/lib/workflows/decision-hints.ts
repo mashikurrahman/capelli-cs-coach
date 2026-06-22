@@ -5,13 +5,15 @@
  * the status to set, who to escalate to, whether an evidence picture is needed,
  * and the fault attribution that changes the routing.
  */
-import { VIDEO_SCENARIOS, type Fault, type TicketStatus } from '@/lib/training/video-scenarios';
+import { VIDEO_SCENARIOS, type Fault, type Fulfillment, type TicketStatus } from '@/lib/training/video-scenarios';
 
 export interface DecisionHint {
   requiresEvidencePicture: boolean;
   escalateTo?: string;
   status?: TicketStatus;
   fault?: Fault;
+  /** Typical fulfillment for this workflow in the training data (FBB/FBPA). */
+  fulfillment?: Fulfillment;
   notes: string[];
 }
 
@@ -23,6 +25,7 @@ for (const s of VIDEO_SCENARIOS) {
   if (s.escalateTo && !h.escalateTo) h.escalateTo = s.escalateTo;
   if (!h.status) h.status = s.status;
   if (!h.fault) h.fault = s.fault;
+  if ((!h.fulfillment || h.fulfillment === 'unknown') && s.fulfillment) h.fulfillment = s.fulfillment;
   if (s.note && !h.notes.includes(s.note)) h.notes.push(s.note);
   byWorkflow.set(s.workflowId, h);
 }

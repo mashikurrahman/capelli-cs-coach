@@ -13,6 +13,7 @@ import type { WorkflowDefinition } from '@/lib/workflows/default-workflows';
 import { getGuideForWorkflow } from '@/lib/guides/guides';
 import { getDecisionHint } from '@/lib/workflows/decision-hints';
 import VisualGuide from '@/components/guides/VisualGuide';
+import ActionBar from '@/components/ticket-coach/ActionBar';
 
 interface Props {
   workflow: WorkflowDefinition;
@@ -108,6 +109,10 @@ export default function WorkflowRunner({ workflow, complaint, orderNumber, clubN
           </div>
         </div>
       </div>
+
+      {/* Action bar — order-age clock, change/cancel eligibility, fault read,
+          systems launcher and the internal-note generator */}
+      <ActionBar workflow={workflow} complaint={complaint} orderNumber={orderNumber} clubName={clubName} />
 
       {/* Visual guide (from the training video) — shown when one exists for this workflow */}
       {guide && (
