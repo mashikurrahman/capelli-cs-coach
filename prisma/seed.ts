@@ -131,26 +131,25 @@ async function main() {
   console.log(`  ✓ App settings seeded`);
 
   // ─── Admin Update ──────────────────────────────────────────────────────────
+  // Keyed on a fixed id so re-running the seed updates the single row instead of
+  // inserting a duplicate banner each time (the previous version omitted the id,
+  // so the upsert never matched and stacked up identical welcome announcements).
   await prisma.adminUpdate.upsert({
-    where: { id: 'welcome-update' } as any,
-    update: {},
+    where: { id: 'welcome-update' },
+    update: {
+      title: 'Welcome to Capelli CS Workflow Coach!',
+      message: 'To enable AI-powered guidance, upload your Capelli training documents in Admin › Upload Docs. The AI needs your materials to cite policies correctly.',
+      isActive: true,
+    },
     create: {
+      id: 'welcome-update',
       title: 'Welcome to Capelli CS Workflow Coach!',
       message: 'To enable AI-powered guidance, upload your Capelli training documents in Admin › Upload Docs. The AI needs your materials to cite policies correctly.',
       isActive: true,
       visibleTo: [],
     },
-  }).catch(() =>
-    prisma.adminUpdate.create({
-      data: {
-        title: 'Welcome to Capelli CS Workflow Coach!',
-        message: 'To enable AI-powered guidance, upload your Capelli training documents in Admin › Upload Docs. The AI needs your materials to cite policies correctly.',
-        isActive: true,
-        visibleTo: [],
-      },
-    })
-  );
-  console.log('  ✓ Welcome announcement created');
+  });
+  console.log('  ✓ Welcome announcement upserted');
 
   // ─── Sample Training Scenarios ─────────────────────────────────────────────
   const scenarios = [
