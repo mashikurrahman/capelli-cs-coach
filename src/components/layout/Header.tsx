@@ -1,10 +1,11 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { Bell, Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { openCommandPalette } from '@/components/command/command-events';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 interface HeaderProps {
   title: string;
@@ -55,10 +56,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           <Search className="h-4 w-4" />
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full text-slate-500 hover:text-slate-900">
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-capelli-red" />
-        </Button>
+        <NotificationBell />
 
         {session?.user && (
           <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
