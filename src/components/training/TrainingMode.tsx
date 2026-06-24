@@ -83,9 +83,14 @@ export default function TrainingMode() {
               </div>
               <h3 className="font-semibold text-gray-800 mb-1">{s.title}</h3>
               <p className="text-xs text-gray-500 line-clamp-2">{s.complaint}</p>
-              {s.quizQuestions?.length > 0 && (
-                <p className="text-xs text-capelli-navy mt-2 font-medium">{s.quizQuestions.length} questions</p>
-              )}
+              <div className="mt-2 flex items-center gap-2">
+                {s.quizQuestions?.length > 0 && (
+                  <span className="text-xs text-capelli-navy font-medium">{s.quizQuestions.length} question{s.quizQuestions.length > 1 ? 's' : ''}</span>
+                )}
+                {s.source && (
+                  <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">{s.source}</span>
+                )}
+              </div>
             </motion.div>
           ))}
         </div>

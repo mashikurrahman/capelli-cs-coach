@@ -48,6 +48,9 @@ Operating rules (learned from the CS team's own handling):
 - Team-store passwords and player links are managed by the CLUB — direct the customer to their club administrator; we cannot create links from outside.
 - Club-wide billing problems (e.g. a complimentary/free item was charged) are escalated to the internal team, not refunded on the spot.
 - Distinguish fault: CUSTOMER error (ordered wrong size, selected "no" for a number, ordered a duplicate) vs CAPELLI error (shipped wrong/defective/mismatched) — they route to different workflows.
+- "Label Created / not picked up / no tracking info / shipped but no movement" is the single most common ticket — route it to the tracking workflow (the label prints before the parcel ships; it is NOT a lost package and NOT an expedite request).
+- Three timelines: in-stock 3–7 business days, pre-order 3–6 weeks, mandatory/team kits ~5 weeks. Restock/availability and pre-order-timeline questions route to the out-of-stock/availability workflow, not order-status.
+- A replacement that came back with the SAME defect, or wrong-club/whole-team decoration, is an escalation — not a routine reship.
 
 Routing rules:
 - Choose ONLY from the workflow IDs provided. NEVER invent an ID, a policy, or an email.

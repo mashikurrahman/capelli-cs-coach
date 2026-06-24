@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Copy, Edit3, Check, Mail, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Copy, Edit3, Check, Mail, RefreshCw, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils/cn';
+import { scanSensitive, scanQuality } from '@/lib/guards/email-guards';
 
 interface Props {
   subject: string;
@@ -33,7 +34,17 @@ export default function EmailDraftCard({ subject, body, onEdit, sessionId }: Pro
 
   const hasUnfilledPlaceholders = PLACEHOLDERS.some(p => body.includes(p));
 
+  // Guardrails over the live draft: sensitive-data leaks (block) + policy-risky
+  // promises learned from real tickets (advisory).
+  const draftText = `${subject}\n${isEditing ? editValue : body}`;
+  const leak = useMemo(() => scanSensitive(draftText), [draftText]);
+  const quality = useMemo(() => scanQuality(draftText), [draftText]);
+
   async function handleCopy() {
+    if (leak.level === 'block') {
+      toast({ title: 'Blocked — sensitive content detected', description: 'Remove internal/sensitive data before copying.', variant: 'destructive' });
+      return;
+    }
     await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -67,6 +78,43 @@ export default function EmailDraftCard({ subject, body, onEdit, sessionId }: Pro
               Fields like <span className="font-mono text-xs bg-yellow-200 px-1 rounded">[Customer Name]</span> must be replaced with actual values.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Guardrail: sensitive-data leak (blocks copy) */}
+      {leak.level === 'block' && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-red-700">
+            <ShieldAlert className="w-4 h-4" /> Do not send — sensitive content detected
+          </p>
+          <ul className="mt-1.5 space-y-0.5">
+            {leak.findings.map((f, i) => (
+              <li key={i} className={cn('text-xs', f.level === 'block' ? 'text-red-700' : 'text-amber-700')}>• {f.label}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-red-600">Never share club passwords, RO numbers, or internal systems with a customer. Remove it to enable copy.</p>
+        </div>
+      )}
+      {leak.level === 'warn' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-700">
+            <AlertTriangle className="w-4 h-4" /> Check before sending
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {leak.findings.map((f, i) => <li key={i} className="text-xs text-amber-700">• {f.label}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {/* Quality coach: policy-risky promises learned from real tickets */}
+      {quality.level === 'warn' && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+            <AlertTriangle className="w-4 h-4" /> Quality check (learned from real tickets)
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {quality.findings.map((f, i) => <li key={i} className="text-xs text-blue-700">• {f.label}</li>)}
+          </ul>
         </div>
       )}
 
@@ -121,10 +169,13 @@ export default function EmailDraftCard({ subject, body, onEdit, sessionId }: Pro
             <Button
               onClick={handleCopy}
               size="sm"
+              disabled={leak.level === 'block'}
+              title={leak.level === 'block' ? 'Resolve the flagged sensitive content before copying' : undefined}
               className={cn('gap-1.5 transition-all', copied && 'bg-capelli-success hover:bg-green-700')}
             >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied!' : 'Copy Email'}
+              {leak.level === 'block'
+                ? <><ShieldAlert className="w-3.5 h-3.5" /> Blocked</>
+                : copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy Email</>}
             </Button>
             <Button
               variant="outline"

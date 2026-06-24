@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Copy, Check, RotateCcw, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { scanSensitive, detectTampering } from '@/lib/guards/email-guards';
+import { scanSensitive, scanQuality, detectTampering } from '@/lib/guards/email-guards';
 
 interface Props {
   name: string;
@@ -46,6 +46,11 @@ export default function TemplateFiller({ name, subject, body, placeholders, init
     () => (manual !== null ? detectTampering(body, finalText) : { tampered: false, missing: [] }),
     [manual, body, finalText]
   );
+  // Advisory: policy-risky promises learned from real tickets (never blocks copy).
+  const quality = useMemo(() => {
+    const full = renderedSubject ? `${renderedSubject}\n${finalText}` : finalText;
+    return scanQuality(full);
+  }, [renderedSubject, finalText]);
 
   function setValue(key: string, val: string) {
     setValues(v => ({ ...v, [key]: val }));
@@ -150,6 +155,18 @@ export default function TemplateFiller({ name, subject, body, placeholders, init
             </p>
             <ul className="mt-1 space-y-0.5">
               {scan.findings.map((f, i) => <li key={i} className="text-xs text-amber-700">• {f.label}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* Quality coach: policy-risky promises learned from real tickets */}
+        {quality.level === 'warn' && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-2.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+              <AlertTriangle className="w-3.5 h-3.5" /> Quality check (learned from real tickets)
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {quality.findings.map((f, i) => <li key={i} className="text-xs text-blue-700">• {f.label}</li>)}
             </ul>
           </div>
         )}

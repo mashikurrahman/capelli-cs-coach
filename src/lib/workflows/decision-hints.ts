@@ -6,6 +6,7 @@
  * and the fault attribution that changes the routing.
  */
 import { VIDEO_SCENARIOS, type Fault, type Fulfillment, type TicketStatus } from '@/lib/training/video-scenarios';
+import { AGENT_SCENARIOS } from '@/lib/training/agent-ticket-scenarios';
 
 export interface DecisionHint {
   requiresEvidencePicture: boolean;
@@ -19,7 +20,7 @@ export interface DecisionHint {
 
 const byWorkflow = new Map<string, DecisionHint>();
 
-for (const s of VIDEO_SCENARIOS) {
+for (const s of [...VIDEO_SCENARIOS, ...AGENT_SCENARIOS]) {
   const h = byWorkflow.get(s.workflowId) ?? { requiresEvidencePicture: false, notes: [] };
   if (s.requiresEvidencePicture) h.requiresEvidencePicture = true;
   if (s.escalateTo && !h.escalateTo) h.escalateTo = s.escalateTo;

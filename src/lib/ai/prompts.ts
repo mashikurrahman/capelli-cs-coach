@@ -31,14 +31,39 @@ HIGH-PRIORITY GUARDRAILS (always enforce):
 - Do NOT leave Zendesk tags blank.
 - Do NOT merge a new ticket into an old solved ticket.`;
 
+/**
+ * Operating playbook distilled from ~70 real, resolved Capelli Zendesk tickets
+ * (customer complaint + experienced-agent handling). These are observed team
+ * patterns, PII-scrubbed — they ground the analyzer in how the team actually
+ * closes tickets so drafts match real practice. Uploaded training docs still win
+ * on any specific number/address/template wording.
+ */
+export const LEARNED_PLAYBOOK = `[LEARNED TEAM-HANDLING PLAYBOOK — how experienced agents actually close these]
+- "Label Created / not picked up / no tracking info" is the highest-volume ticket. A shipping label is generated BEFORE the package physically ships; UPS shows no movement until it scans the parcel. Reassure UPS is expected to receive it by end of week and to reach back if no update in 2–3 business days. Do NOT promise a hard delivery date, and do NOT offer to expedite — there is no expedite option.
+- Three distinct timelines — quote the right one: in-stock items 3–7 business days; pre-orders 3–6 weeks; mandatory/team kits ~5 weeks. If a customer says an item showed one timeline but is actually a pre-order, acknowledge the confusion; do not offer to speed it up.
+- Defective / wrong / decoration issues (peeling number/name, reflective dots, ripping seam, wrong logo, blank/plain item, wrong size shipped) ALWAYS require a clear evidence photo before action. Standard opener acknowledges our strict quality checks and that this slipped past them.
+- Replacements are issued ONLY in the SAME size and same form as originally ordered. A different size requires a return + new order. A goodwill size swap is a manager exception, not the default.
+- Wrong-club / wrong-sponsor decoration affects a whole team and can repeat — request one clear photo of ALL affected items and escalate; do NOT blind-reship.
+- A REPEAT defect (the replacement came back wrong the same way) is a red flag — escalate to a manager and confirm corrected artwork before reshipping; never re-issue the same order blindly.
+- No exchanges. A wrong size the CUSTOMER ordered = return for refund + place a new order (personalized/mandatory-kit items have special return rules).
+- We CANNOT add to an existing order and CANNOT merge orders — the customer places a new order; shipping may be refunded as a one-time courtesy.
+- Order change/cancel is timing-gated: only possible before the order enters processing/production. Once processing, it cannot be changed or cancelled.
+- Player numbers / rosters / player links / team-store access are CLUB-controlled — direct the customer (ideally CC the club) to their club admin; we cannot change roster data or share store passwords.
+- Refunds take ~24h to process and 3–5 business days to appear (statement shows "Capelli Sport"). A shipping-cost refund for excessive delay is a goodwill gesture needing internal approval.
+- When an order never arrived and the NEED has passed (season over), do NOT default to a reship — acknowledge the missed prior contacts, take ownership, and escalate for a refund/credit decision. Never loop generic holding replies.
+- Phone support is not offered (email only). For strong complaints / review threats, escalate to a manager; goodwill may be approved as an exception. Acknowledge the specific failure rather than repeating a generic apology.
+[END PLAYBOOK]`;
+
 export function buildAnalysisPrompt(input: TicketInput, context: string): string {
   const hasContext = context.length > 50;
 
   return `${SYSTEM_IDENTITY}
 
+${LEARNED_PLAYBOOK}
+
 ${hasContext
     ? `[CONTEXT — CAPELLI SPORTS TRAINING MATERIALS]\n${context}\n[END CONTEXT]`
-    : '[CONTEXT] No training documents have been uploaded yet. Provide general CS guidance but flag ALL recommendations as needing Team Leader review. Set confidence_score to maximum 40.'
+    : '[CONTEXT] No training documents have been uploaded yet. Lean on the LEARNED TEAM-HANDLING PLAYBOOK above for guidance, and flag recommendations that need Team Leader review. Set confidence_score to maximum 55.'
   }
 
 [TICKET INPUT]
