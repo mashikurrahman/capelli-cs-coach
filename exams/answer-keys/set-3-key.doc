@@ -1,0 +1,46 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name=ProgId content=Word.Document><meta name=Generator content="Microsoft Word">
+<title>ANSWER KEY — Set 3  (grader only)</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a2e; line-height: 1.4; }
+h1 { font-size: 20pt; color: #0b2e6b; border-bottom: 2px solid #0b2e6b; padding-bottom: 4pt; }
+h2 { font-size: 15pt; color: #0b2e6b; margin-top: 16pt; }
+h3 { font-size: 12.5pt; color: #14213d; margin-top: 12pt; }
+hr { border: 0; border-top: 1px solid #b0b8c4; }
+strong { color: #0b2e6b; }
+blockquote { background: #eef2f7; border-left: 3pt solid #0b2e6b; margin: 8pt 0; padding: 6pt 12pt; font-style: italic; }
+ul, ol { margin: 6pt 0 6pt 12pt; }
+li { margin: 3pt 0; }
+code { font-family: Consolas, monospace; background: #eef2f7; }
+table { border-collapse: collapse; margin: 10pt 0; font-size: 10.5pt; }
+th { background: #0b2e6b; color: #ffffff; }
+th, td { border: 1px solid #9aa5b4; padding: 4pt 8pt; text-align: left; }
+</style></head>
+<body><h1>ANSWER KEY — Set 3  <em>(grader only)</em></h1>
+<p>Rubric per question: <strong>Route/action (4) · Policy stated (3) · Trap avoided (3)</strong> unless noted.</p>
+<hr>
+<p><strong>Q1 — Returned to sender.</strong></p>
+<ul><li><strong>Route:</strong> Returned to sender. <strong>Action:</strong> Advise the fulfillment center returned the order (e.g., insufficient/incorrect address). <strong>Confirm the correct shipping address on file</strong> with the customer, then reship once confirmed.</li><li><strong>Trap:</strong> reshipping to the same unverified address, or refunding without offering the reship. <em>(4/3/3)</em></li></ul>
+<p><strong>Q2 — Pre-order vs stock timeline confusion.</strong></p>
+<ul><li><strong>Route:</strong> Out of stock / processing. <strong>Action:</strong> Acknowledge the confusion empathetically. Explain the timelines: <strong>in-stock items 3–7 business days</strong>, <strong>pre-orders 3–6 weeks</strong>, <strong>mandatory/team kits ~5 weeks</strong>. No expedite. Confirm which applies to their item.</li><li><strong>Trap:</strong> offering to speed it up / promising the original 3–7 days. <em>(4/3/3)</em></li></ul>
+<p><strong>Q3 — Wrong-club decoration, whole team.</strong></p>
+<ul><li><strong>Route:</strong> Wrong item received (production error, team-wide). <strong>Action:</strong> Request <strong>one clear photo of ALL affected items</strong> in a single shot; <strong>escalate</strong> to operations/manager — this is a production/artwork error that can repeat. Do <strong>not</strong> blind-reship.</li><li><strong>Trap (auto-fail):</strong> reshipping without escalation (the wrong artwork just repeats). <em>(4/3/3)</em></li></ul>
+<p><strong>Q4 — Return one mandatory-kit item.</strong></p>
+<ul><li><strong>Route:</strong> Return/Exchange (mandatory-kit rule). <strong>Action:</strong> Items from the mandatory package are <strong>not eligible for return on their own.</strong> However, if the customer places a <strong>new order with the correct size</strong>, we'll refund the returned item(s) once we receive them. No exchanges. 30-day window, unworn/unwashed, tags on.</li><li><strong>Trap:</strong> accepting the single item as a standalone return/exchange. <em>(4/3/3)</em></li></ul>
+<p><strong>Q5 — Shopify cancellation.</strong></p>
+<ul><li><strong>Route:</strong> Order cancellation (Shopify/FBPA). <strong>Action:</strong> Confirm it isn't fulfilled/shipped; cancel the order on Shopify and refund to the original payment. For Shopify, quote <strong>up to two weeks</strong> for the refund to reflect as "CAPELLI SPORT" (note: BigCommerce cancellations quote 3–5 business days — quote the right one for the platform). They may reorder anytime.</li><li><strong>Trap:</strong> quoting the wrong platform's refund timing, or cancelling an already-fulfilled order. <em>(4/3/3)</em></li></ul>
+<p><strong>Q6 — Two players, one account.</strong></p>
+<ul><li><strong>Route:</strong> Ordering help (two players). <strong>Action:</strong> After signing in, select the kit from the left menu, choose the <strong>first</strong> player's team + name, add items, then <strong>"Proceed to Cart"</strong> (this only adds to cart, not checkout). Then select the kit again for the <strong>second</strong> player, change the team/name, add items, and check out from the cart at the top.</li><li><strong>Trap:</strong> telling them to place two fully separate orders when one cart works. <em>(4/3/3)</em></li></ul>
+<p><strong>Q7 — Player number change.</strong></p>
+<ul><li><strong>Route:</strong> Order change / adjustment. <strong>Action:</strong> We <strong>cannot change the number without the coach's confirmation.</strong> First verify the order is <strong>not yet in production</strong>; if not, put the order <strong>on hold</strong> (email Operations) and ask the customer to <strong>CC their coach</strong> to confirm the correct number. Numbers/roster are club-controlled.</li><li><strong>Trap (auto-fail):</strong> changing the number instantly without coach confirmation / production check. <em>(4/3/3)</em></li></ul>
+<p><strong>Q8 — Discontinued item.</strong></p>
+<ul><li><strong>Route:</strong> Out of stock (no restock). <strong>Action:</strong> Advise the item is out of stock and <strong>will not be replenished</strong>; recommend exploring similar available products; apologize for the inconvenience.</li><li><strong>Trap:</strong> implying it might come back / promising a restock. <em>(4/3/3)</em></li></ul>
+<p><strong>Q9 — Spot the mistake.</strong> Full credit = all <strong>four</strong> internal leaks caught (2.5 each):</p>
+<ol><li><strong>Names an internal contact</strong> ("emailed Dan") — never surface internal names.</li><li><strong>Reveals internal approval chain</strong> ("awaiting BD's approval") — internal only.</li><li><strong>Includes a do-not-respond instruction</strong> ("PLS DO NOT RESPOND") — that's an internal note, never sent to a customer.</li><li><strong>Leaks an internal Wave number</strong> ("Wave #77") — internal fulfillment reference.</li></ol>
+<ul><li><strong>Corrected message:</strong> a clean customer-facing note — e.g., acknowledge the issue, say the appropriate department is working on the replacement, and that you'll follow up with an update — with <strong>none</strong> of the internal details, and set Open + a separate internal note. <em>(10)</em></li></ul>
+<p><strong>Q10 — Repeat defect.</strong></p>
+<ul><li><strong>Route:</strong> Damaged/Defective → <strong>Escalation.</strong> <strong>Action:</strong> A replacement that came back with the <strong>same defect</strong> is a red flag — do <strong>not</strong> re-issue the same order blindly. Request a photo, <strong>escalate to a manager</strong>, and confirm the <strong>corrected artwork/decoration</strong> before reshipping. Acknowledge it's the second time specifically.</li><li><strong>Trap (auto-fail):</strong> firing off another identical replacement (the loop that caused the complaint). <em>(4/3/3)</em></li></ul>
+<hr>
+<h2>Section B — MCQ Answers (2 pts each)</h2>
+<table border=1 cellspacing=0 cellpadding=5><thead><tr><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th></th></tr></thead><tbody><tr><td>11</td><td>C</td><td>16</td><td>B</td><td>21</td><td>B</td><td>26</td><td>B</td><td></td></tr><tr><td>12</td><td>B</td><td>17</td><td>B</td><td>22</td><td>B</td><td>27</td><td>B</td><td></td></tr><tr><td>13</td><td>D</td><td>18</td><td>B</td><td>23</td><td>A</td><td>28</td><td>B</td><td></td></tr><tr><td>14</td><td>B</td><td>19</td><td>C</td><td>24</td><td>B</td><td>29</td><td>B</td><td></td></tr><tr><td>15</td><td>C</td><td>20</td><td>B</td><td>25</td><td>B</td><td>30</td><td>C</td><td></td></tr></tbody></table></body></html>

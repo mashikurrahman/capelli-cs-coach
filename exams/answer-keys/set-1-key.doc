@@ -1,0 +1,46 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name=ProgId content=Word.Document><meta name=Generator content="Microsoft Word">
+<title>ANSWER KEY — Set 1  (grader only)</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a2e; line-height: 1.4; }
+h1 { font-size: 20pt; color: #0b2e6b; border-bottom: 2px solid #0b2e6b; padding-bottom: 4pt; }
+h2 { font-size: 15pt; color: #0b2e6b; margin-top: 16pt; }
+h3 { font-size: 12.5pt; color: #14213d; margin-top: 12pt; }
+hr { border: 0; border-top: 1px solid #b0b8c4; }
+strong { color: #0b2e6b; }
+blockquote { background: #eef2f7; border-left: 3pt solid #0b2e6b; margin: 8pt 0; padding: 6pt 12pt; font-style: italic; }
+ul, ol { margin: 6pt 0 6pt 12pt; }
+li { margin: 3pt 0; }
+code { font-family: Consolas, monospace; background: #eef2f7; }
+table { border-collapse: collapse; margin: 10pt 0; font-size: 10.5pt; }
+th { background: #0b2e6b; color: #ffffff; }
+th, td { border: 1px solid #9aa5b4; padding: 4pt 8pt; text-align: left; }
+</style></head>
+<body><h1>ANSWER KEY — Set 1  <em>(grader only)</em></h1>
+<p>Rubric per question: <strong>Route/action (4) · Policy stated (3) · Trap avoided (3)</strong> unless noted.</p>
+<hr>
+<p><strong>Q1 — Label Created / not moving.</strong></p>
+<ul><li><strong>Route:</strong> Tracking / order-status. <strong>Action:</strong> Reassure — the shipping label is generated <em>before</em> the parcel physically ships; UPS shows no movement until it scans the package. Tell them UPS is expected to receive it by end of week and to reach back if there's no update in <strong>2–3 business days</strong>. Provide the UPS tracking link.</li><li><strong>Must NOT:</strong> promise a hard delivery date; offer to expedite.</li><li><strong>Trap (auto-fail):</strong> promising a specific delivery date. <em>(4/3/3)</em></li></ul>
+<p><strong>Q2 — Expedite request.</strong></p>
+<ul><li><strong>Route:</strong> Expedite/processing-time. <strong>Action:</strong> Politely explain <strong>we do not offer expedited shipping</strong>; orders are worked in the order received. Quote the correct processing timeline and confirm the order is awaiting fulfillment. Empathize with the deadline but do <strong>not</strong> promise arrival by the event.</li><li><strong>Trap (auto-fail):</strong> promising it will arrive in time / offering rush shipping. <em>(4/3/3)</em></li></ul>
+<p><strong>Q3 — Number peeling (decoration defect).</strong></p>
+<ul><li><strong>Route:</strong> Damaged/Defective. <strong>Action:</strong> Request a <strong>clear evidence photo</strong> (showing the size tag) <em>before</em> acting. Use the quality-checks opener. Then replace in the <strong>same size</strong> originally ordered.</li><li><strong>Policy:</strong> replacements are same-size/same-form only; evidence photo required first.</li><li><strong>Trap (auto-fail):</strong> shipping a replacement with no photo, or in a different size. <em>(4/3/3)</em></li></ul>
+<p><strong>Q4 — Too small, wants exchange.</strong></p>
+<ul><li><strong>Route:</strong> Return/Exchange. <strong>Action:</strong> <strong>No exchanges.</strong> Customer returns for a refund (30 days, unworn/unwashed, tags on) and places a new order in the desired size. Give the return address (Capelli Sport Returns, 901 Sathers Drive, Pittston, PA 18640). Note shipping costs aren't refunded; personalized items non-returnable.</li><li><strong>Trap (auto-fail):</strong> offering a direct size exchange. <em>(4/3/3)</em></li></ul>
+<p><strong>Q5 — Duplicate order, cancel one.</strong></p>
+<ul><li><strong>Route:</strong> Order cancellation. <strong>Action:</strong> Confirm the order is <strong>not yet fulfilled</strong> (check it isn't in the FBB list / not shipped or delivered in SAP). If not fulfilled, cancel on BigCommerce and process the refund through the refunds team; refund posts in <strong>3–5 business days</strong> as "CAPELLI SPORT". If already processing/shipped, it cannot be cancelled.</li><li><strong>Trap:</strong> cancelling/refunding before verifying fulfillment status; naming the internal refunds team to the customer. <em>(4/3/3)</em></li></ul>
+<p><strong>Q6 — Individual items without the whole kit.</strong></p>
+<ul><li><strong>Route:</strong> Individual item ordering. <strong>Action:</strong> 24h after the mandatory kit is purchased, sign in to teams.us.capellisport.com with the <strong>same email</strong>, on a <strong>PC/Mac</strong>; select the club + club password; choose the kit/player; then click <strong>"Enable Adding Individual Products"</strong> to add single items to cart. Cannot place a new order directly from a previous order.</li><li><strong>Trap:</strong> saying you can add the socks to their existing order (you can't). <em>(4/3/3)</em></li></ul>
+<p><strong>Q7 — Team store password.</strong></p>
+<ul><li><strong>Route:</strong> Team-store access (club-managed). <strong>Action:</strong> Team-store access is managed by the <strong>club</strong> — direct the customer to their coach/club administrator. <strong>Never share a club password.</strong></li><li><strong>Trap (auto-fail):</strong> giving the customer any club password. <em>(4/3/3)</em></li></ul>
+<p><strong>Q8 — Out of stock.</strong></p>
+<ul><li><strong>Route:</strong> Out of stock. <strong>Action:</strong> Confirm the item/size is OOS with no firm restock date; offer options: <strong>cancel + refund</strong>, <strong>wait</strong> for restock, or an <strong>alternative size/color</strong> if available. Email Planning to replenish if appropriate; advise once restocked.</li><li><strong>Trap:</strong> promising a firm restock date. <em>(4/3/3)</em></li></ul>
+<p><strong>Q9 — Manager / review escalation.</strong></p>
+<ul><li><strong>Route:</strong> Escalation. <strong>Action:</strong> <strong>Phone support is not offered — email only</strong>; do not hand out a manager's phone number. Acknowledge the specific problem (not a generic apology), and escalate the complaint/review threat to a manager, where goodwill may be approved as an exception. Set Open + internal note.</li><li><strong>Trap (auto-fail):</strong> giving out an internal phone number or contact. <em>(4/3/3)</em></li></ul>
+<p><strong>Q10 — Spot the mistake.</strong> Full credit requires catching <strong>all four</strong>:</p>
+<ol><li><strong>Offers an exchange</strong> ("we'll exchange your medium for a large") — no exchanges; must be return-for-refund + new order, OR if it's <em>our</em> error, a same-size replacement (not an upsize).</li><li><strong>Promises a hard delivery date / guarantee</strong> ("arrive by Friday guaranteed") — never promise a date.</li><li><strong>Leaks the internal RO number</strong> ("RO#48213") — RO numbers must never go to a customer.</li><li><strong>Ships a different size</strong> as the "replacement" — replacements are same-size only.</li></ol>
+<ul><li><strong>Corrected handling:</strong> if customer-fault size → return-for-refund + new order; if Capelli error → request evidence photo, then same-size replacement, no date promised, no RO# shared.</li><li>Scoring: 2.5 pts per error identified. Miss the RO# leak → cap the question at 5. <em>(10)</em></li></ul>
+<hr>
+<h2>Section B — MCQ Answers (2 pts each)</h2>
+<table border=1 cellspacing=0 cellpadding=5><thead><tr><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th>Q</th><th>Ans</th><th></th></tr></thead><tbody><tr><td>11</td><td>A</td><td>16</td><td>B</td><td>21</td><td>B</td><td>26</td><td>B</td><td></td></tr><tr><td>12</td><td>C</td><td>17</td><td>C</td><td>22</td><td>C</td><td>27</td><td>C</td><td></td></tr><tr><td>13</td><td>B</td><td>18</td><td>A</td><td>23</td><td>B</td><td>28</td><td>D</td><td></td></tr><tr><td>14</td><td>A</td><td>19</td><td>C</td><td>24</td><td>D</td><td>29</td><td>B</td><td></td></tr><tr><td>15</td><td>D</td><td>20</td><td>D</td><td>25</td><td>C</td><td>30</td><td>C</td><td></td></tr></tbody></table></body></html>

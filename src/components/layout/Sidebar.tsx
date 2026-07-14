@@ -8,7 +8,7 @@ import { getInitials } from '@/lib/utils/helpers';
 import {
   Bot, BookOpen, FileText, Search, GraduationCap, ShieldCheck,
   LayoutDashboard, Settings, LogOut, ChevronLeft, ChevronRight,
-  Upload, Users, BarChart3, MonitorPlay,
+  Upload, Users, BarChart3, MonitorPlay, Award, ClipboardList,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -47,6 +47,7 @@ const sections: NavSection[] = [
     items: [
       { href: '/guides', label: 'Visual Guides', icon: <MonitorPlay className="w-4 h-4" /> },
       { href: '/training', label: 'Training Mode', icon: <GraduationCap className="w-4 h-4" /> },
+      { href: '/exam', label: 'Certification Exam', icon: <Award className="w-4 h-4" /> },
       { href: '/qa-review', label: 'QA Review', icon: <ShieldCheck className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'QA'] },
     ],
   },
@@ -57,6 +58,7 @@ const sections: NavSection[] = [
       { href: '/admin/upload', label: 'Upload Docs', icon: <Upload className="w-4 h-4" />, roles: ['ADMIN', 'TRAINER'] },
       { href: '/admin/users', label: 'Manage Users', icon: <Users className="w-4 h-4" />, roles: ['ADMIN'] },
       { href: '/admin/analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER'] },
+      { href: '/admin/exams', label: 'Exam Results', icon: <ClipboardList className="w-4 h-4" />, roles: ['ADMIN', 'TEAM_LEADER', 'TRAINER'] },
     ],
   },
 ];

@@ -1,0 +1,35 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name=ProgId content=Word.Document><meta name=Generator content="Microsoft Word">
+<title>Capelli Sport — CS Certification Exam</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a2e; line-height: 1.4; }
+h1 { font-size: 20pt; color: #0b2e6b; border-bottom: 2px solid #0b2e6b; padding-bottom: 4pt; }
+h2 { font-size: 15pt; color: #0b2e6b; margin-top: 16pt; }
+h3 { font-size: 12.5pt; color: #14213d; margin-top: 12pt; }
+hr { border: 0; border-top: 1px solid #b0b8c4; }
+strong { color: #0b2e6b; }
+blockquote { background: #eef2f7; border-left: 3pt solid #0b2e6b; margin: 8pt 0; padding: 6pt 12pt; font-style: italic; }
+ul, ol { margin: 6pt 0 6pt 12pt; }
+li { margin: 3pt 0; }
+code { font-family: Consolas, monospace; background: #eef2f7; }
+table { border-collapse: collapse; margin: 10pt 0; font-size: 10.5pt; }
+th { background: #0b2e6b; color: #ffffff; }
+th, td { border: 1px solid #9aa5b4; padding: 4pt 8pt; text-align: left; }
+</style></head>
+<body><h1>Capelli Sport — CS Certification Exam</h1>
+<p>Seven parallel exam sets (one per team member), <strong>30 questions each = 210 questions total.</strong> Each set has two sections:</p>
+<ul><li><strong>Section A — 10 customer-complaint scenarios</strong> (written answers)</li><li><strong>Section B — 20 multiple-choice questions</strong> (single best answer)</li></ul>
+<p>Every set covers the same competencies at the same difficulty, but with <strong>different questions</strong> (different scenarios <em>and</em> different MCQs, with correct options spread across A–D), so members can sit the exam side-by-side without sharing answers.</p>
+<h2>Folder layout</h2>
+<p>``<code> exams/ ├── README.md                ← you are here (admin + scoring guide) ├── questions/               ← hand these to the team members (no answers) │   ├── set-1.md  … set-7.md └── answer-keys/             ← grader only — keep private ├── set-1-key.md  … set-7-key.md </code>``</p>
+<h2>The 10 competency slots (same in every set)</h2>
+<table border=1 cellspacing=0 cellpadding=5><thead><tr><th>Q</th><th>Competency tested</th><th></th></tr></thead><tbody><tr><td>1</td><td>Shipping &amp; tracking (label-created, delivered-not-received, returned-to-sender, partial/mixed)</td><td></td></tr><tr><td>2</td><td>Processing time / ETA / <strong>no expedite</strong></td><td></td></tr><tr><td>3</td><td>Defective / decoration / wrong item — <strong>evidence photo + same-size replacement</strong></td><td></td></tr><tr><td>4</td><td>Returns &amp; exchanges policy — <strong>no exchanges</strong>, 30-day window, personalized rules</td><td></td></tr><tr><td>5</td><td>Cancellation &amp; refunds — timing gate, refund timing, lost/never-received</td><td></td></tr><tr><td>6</td><td>Ordering help — individual items, add-to-order, two players, size help, website/phone</td><td></td></tr><tr><td>7</td><td>Club-controlled — player link / roster / number / <strong>team-store password</strong></td><td></td></tr><tr><td>8</td><td>Out of stock — restock, alternative size/color, cancel-or-wait</td><td></td></tr><tr><td>9</td><td>Escalation &amp; the <strong>leak trap</strong> — complaints, reviews, internal-info handling</td><td></td></tr><tr><td>10</td><td>Wildcard — multi-issue ticket <strong>or</strong> spot-the-mistake in a drafted reply</td><td></td></tr></tbody></table>
+<h2>Scoring (strict)</h2>
+<ul><li><strong>Section A — 10 scenarios × 6 pts = 60.</strong> Grade each against the key's rubric:</li></ul>
+<p><strong>Route/action (4) · Correct policy stated (3) · Trap avoided (3)</strong> (capped at 6; the spot-the-mistake / multi-issue questions split by items listed in the key).</p>
+<ul><li><strong>Section B — 20 MCQ × 2 pts = 40.</strong> Correct letter only; the answer table is in each key.</li><li><strong>Total = 100 per set. Pass = 80 / 100.</strong> Below 80 → retrain on the missed areas and re-sit a different set.</li><li><strong>Automatic fail on any question</strong> (regardless of the rest) if the answer would:</li></ul>
+<p>leak a club password, RO#, internal team name (ROLO/Dan/BD/Operations), or a "do-not-respond" note to the customer; <strong>promise an exchange</strong>; <strong>promise expedited shipping</strong>; or <strong>promise a refund/replacement without the required check or evidence photo.</strong> These are the non-negotiables.</p>
+<h2>How to administer</h2>
+<ol><li>Send each member their <code>questions/set-N.md</code> (print or paste — no answer key).</li><li>Closed-book, 45 minutes, written answers in the customer's-agent voice.</li><li>Grade with the matching <code>answer-keys/set-N-key.md</code>.</li><li>Record scores; anyone &lt; 80 retrains and re-sits a different set.</li></ol>
+<blockquote>Reference material: the Ticket Coach workflows, the Templates-by-Scenario library, the training video, and the real resolved-ticket patterns. Answers should reflect <strong>current Capelli policy</strong>, not general customer-service instinct.</blockquote></body></html>

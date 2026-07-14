@@ -38,6 +38,8 @@ model User {
   quizAttempts    QuizAttempt[]
   uploadedDocs    Document[]
   chatMessages    ChatMessage[]
+  examAttempts    ExamAttempt[]  @relation("ExamTaker")
+  gradedExams     ExamAttempt[]  @relation("ExamGrader")
 
   @@map("users")
 }
@@ -578,6 +580,84 @@ model QuizAttempt {
   createdAt    DateTime         @default(now())
 
   @@map("quiz_attempts")
+}
+
+// ─── CERTIFICATION EXAM ───────────────────────────────────────────────────────
+// A randomized-bank exam system: MCQs auto-grade; written scenarios are captured
+// and graded by hand by a manager. Seeded from the exams/ question bank.
+
+enum ExamQuestionType {
+  MCQ
+  WRITTEN
+}
+
+enum ExamStatus {
+  IN_PROGRESS
+  SUBMITTED   // taker finished; written answers await grading
+  GRADED      // manager graded the written section; total finalized
+}
+
+model ExamQuestion {
+  id           String           @id @default(cuid())
+  type         ExamQuestionType
+  slot         Int?             // 1..10 competency slot (written); null for MCQ
+  competency   String           // human-readable competency label
+  sourceSet    Int?             // originating set (1..7), for reference
+  difficulty   Difficulty       @default(INTERMEDIATE)
+  prompt       String           // the customer complaint + the ask
+  options      String[]         // MCQ only
+  correctIndex Int?             // MCQ only
+  modelAnswer  String?          // WRITTEN: grader rubric / model answer
+  points       Int              @default(2) // MCQ 2, written 6
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+
+  responses    ExamResponse[]
+
+  @@index([type])
+  @@map("exam_questions")
+}
+
+model ExamAttempt {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation("ExamTaker", fields: [userId], references: [id], onDelete: Cascade)
+  status       ExamStatus  @default(IN_PROGRESS)
+  startedAt    DateTime    @default(now())
+  submittedAt  DateTime?
+  gradedAt     DateTime?
+  gradedById   String?
+  gradedBy     User?       @relation("ExamGrader", fields: [gradedById], references: [id])
+  autoScore    Int?        // MCQ points earned
+  autoMax      Int         @default(0)
+  writtenScore Int?        // manual points earned
+  writtenMax   Int         @default(0)
+  totalScore   Int?        // autoScore + writtenScore once graded
+  maxScore     Int         @default(0)
+  passed       Boolean?
+
+  responses    ExamResponse[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("exam_attempts")
+}
+
+model ExamResponse {
+  id            String       @id @default(cuid())
+  attemptId     String
+  attempt       ExamAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      ExamQuestion @relation(fields: [questionId], references: [id])
+  order         Int          // display order within the exam
+  selectedIndex Int?         // MCQ answer chosen
+  isCorrect     Boolean?     // MCQ auto-grade result
+  writtenAnswer String?      // free-text response for written questions
+  awardedPoints Int?         // auto (MCQ) or grader-assigned (written)
+  graderNote    String?
+
+  @@index([attemptId])
+  @@map("exam_responses")
 }
 
 // ─── AUDIT LOG ────────────────────────────────────────────────────────────────
