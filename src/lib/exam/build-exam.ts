@@ -10,6 +10,20 @@
 
 /** Pass threshold as a percentage of max score. */
 export const PASS_PERCENT = 80;
+
+/** The 10 written competency slots (also used by the seed script). */
+export const SLOT_LABEL: Record<number, string> = {
+  1: 'Shipping & tracking',
+  2: 'Processing time / ETA / no-expedite',
+  3: 'Defective / wrong item (evidence + replacement)',
+  4: 'Returns & exchanges policy',
+  5: 'Cancellation & refunds',
+  6: 'Ordering help',
+  7: 'Club-controlled (links / roster / passwords)',
+  8: 'Out of stock',
+  9: 'Escalation & leak-trap',
+  10: 'Wildcard (multi-issue / spot-the-mistake)',
+};
 export const WRITTEN_PER_SLOT = 1;
 export const MCQ_COUNT = 20;
 

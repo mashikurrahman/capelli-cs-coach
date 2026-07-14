@@ -40,6 +40,7 @@ model User {
   chatMessages    ChatMessage[]
   examAttempts    ExamAttempt[]  @relation("ExamTaker")
   gradedExams     ExamAttempt[]  @relation("ExamGrader")
+  examSessions    ExamSession[]  @relation("ExamSessionCreator")
 
   @@map("users")
 }
@@ -618,10 +619,28 @@ model ExamQuestion {
   @@map("exam_questions")
 }
 
+model ExamSession {
+  id           String        @id @default(cuid())
+  title        String
+  isOpen       Boolean       @default(true)
+  timeLimitMin Int?          // optional soft time budget shown to takers
+  createdById  String
+  createdBy    User          @relation("ExamSessionCreator", fields: [createdById], references: [id])
+  createdAt    DateTime      @default(now())
+  closedAt     DateTime?
+
+  attempts     ExamAttempt[]
+
+  @@index([isOpen])
+  @@map("exam_sessions")
+}
+
 model ExamAttempt {
   id           String      @id @default(cuid())
   userId       String
   user         User        @relation("ExamTaker", fields: [userId], references: [id], onDelete: Cascade)
+  sessionId    String?
+  session      ExamSession? @relation(fields: [sessionId], references: [id])
   status       ExamStatus  @default(IN_PROGRESS)
   startedAt    DateTime    @default(now())
   submittedAt  DateTime?

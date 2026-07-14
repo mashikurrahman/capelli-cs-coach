@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { GRADER_ROLES } from '@/lib/exam/build-exam';
+import { competencyBreakdown, teamWeakAreas, type BreakdownRow } from '@/lib/exam/report';
 
 function esc(s: unknown): string {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -75,6 +76,12 @@ export async function GET(req: NextRequest) {
     : 0;
   const passCount = graded.filter((a) => a.passed).length;
 
+  const toBreakdown = (a: typeof attempts[number]): BreakdownRow[] =>
+    competencyBreakdown(a.responses.map((r) => ({
+      type: r.question.type, competency: r.question.competency, points: r.question.points,
+      awardedPoints: r.awardedPoints, isCorrect: r.isCorrect,
+    })));
+
   let html = `<h1>Capelli Sport — Certification Exam Report</h1>
 <p class="muted">Generated ${today} · ${attempts.length} attempt(s)${attemptId ? '' : ` · ${graded.length} graded · avg ${avgPct}% · ${passCount}/${graded.length} passed`}</p>`;
 
@@ -95,6 +102,17 @@ export async function GET(req: NextRequest) {
 </tr>`;
     });
     html += `</table>`;
+
+    // Team weak-areas (weakest competency first) across graded attempts.
+    if (graded.length) {
+      const weak = teamWeakAreas(graded.map(toBreakdown));
+      html += `<h3>Team weak areas (weakest first)</h3><table>
+<tr><th>Competency</th><th>Team accuracy</th><th>Points</th></tr>`;
+      for (const w of weak) {
+        html += `<tr><td>${esc(w.competency)}</td><td>${w.pct}%</td><td>${w.earned}/${w.max}</td></tr>`;
+      }
+      html += `</table>`;
+    }
   }
 
   // ── Per-member answer sheets ──────────────────────────────────────────────
@@ -105,6 +123,17 @@ export async function GET(req: NextRequest) {
 
     html += `<div class="sheet"><h2>${esc(a.user?.name)} — Answer Sheet</h2>
 <p class="muted">${esc(a.user?.email)} · submitted ${esc((a.submittedAt ?? a.startedAt).toISOString().slice(0, 10))} · Result: ${scoreLabel(a)}</p>`;
+
+    // Competency breakdown for this member.
+    const rows = toBreakdown(a);
+    if (rows.length) {
+      html += `<h3>Competency breakdown</h3><table><tr><th>Competency</th><th>Score</th><th>%</th></tr>`;
+      for (const b of rows) {
+        const tone = b.pct >= 80 ? 'pass' : b.pct >= 50 ? '' : 'fail';
+        html += `<tr><td>${esc(b.competency)}</td><td>${b.earned}/${b.max}</td><td class="${tone}">${b.pct}%</td></tr>`;
+      }
+      html += `</table>`;
+    }
 
     // Section A — written
     html += `<h3>Section A — Written scenarios (${a.writtenScore ?? '—'}/${a.writtenMax})</h3>`;

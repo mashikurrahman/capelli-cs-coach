@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { GRADER_ROLES } from '@/lib/exam/build-exam';
+import { competencyBreakdown } from '@/lib/exam/report';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -57,6 +58,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     maxScore: attempt.maxScore,
     passed: attempt.passed,
     canGrade: isGrader && attempt.status === 'SUBMITTED',
+    breakdown: competencyBreakdown(attempt.responses.map((r) => ({
+      type: r.question.type,
+      competency: r.question.competency,
+      points: r.question.points,
+      awardedPoints: r.awardedPoints,
+      isCorrect: r.isCorrect,
+    }))),
     responses,
   });
 }

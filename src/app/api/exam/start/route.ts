@@ -40,6 +40,15 @@ export async function POST() {
     });
   }
 
+  // An admin must have an exam window open before anyone can start.
+  const openSession = await prisma.examSession.findFirst({
+    where: { isOpen: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!openSession) {
+    return NextResponse.json({ error: 'No exam is currently open. Ask your admin to open one.' }, { status: 409 });
+  }
+
   const pool = await prisma.examQuestion.findMany({
     where: { isActive: true },
     select: { id: true, type: true, slot: true },
@@ -61,6 +70,7 @@ export async function POST() {
   const attempt = await prisma.examAttempt.create({
     data: {
       userId,
+      sessionId: openSession.id,
       status: 'IN_PROGRESS',
       autoMax,
       writtenMax,
@@ -74,6 +84,8 @@ export async function POST() {
   return NextResponse.json({
     attemptId: attempt.id,
     resumed: false,
+    sessionTitle: openSession.title,
+    timeLimitMin: openSession.timeLimitMin,
     maxScore,
     questions: orderedIds.map((id, i) => sanitize(byId.get(id)!, i)),
   });

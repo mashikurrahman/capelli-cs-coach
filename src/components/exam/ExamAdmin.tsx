@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download } from 'lucide-react';
+import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +13,8 @@ interface AttemptRow {
   startedAt: string; submittedAt: string | null; gradedAt: string | null;
 }
 interface Stats { bankSize: number; awaitingGrading: number; graded: number; passed: number }
+interface SessionRow { id: string; title: string; isOpen: boolean; timeLimitMin: number | null; attemptCount: number; createdAt: string }
+interface Breakdown { competency: string; earned: number; max: number; pct: number }
 interface Resp {
   id: string; order: number; type: 'MCQ' | 'WRITTEN'; competency: string; prompt: string;
   options: string[]; points: number; selectedIndex: number | null; isCorrect: boolean | null;
@@ -23,14 +25,17 @@ interface Resp {
 export default function ExamAdmin() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
-    const res = await fetch('/api/exam/admin');
-    const data = await res.json();
-    if (res.ok) { setStats(data.stats); setAttempts(data.attempts); }
+    const [aRes, sRes] = await Promise.all([fetch('/api/exam/admin'), fetch('/api/exam/sessions')]);
+    const aData = await aRes.json();
+    const sData = await sRes.json();
+    if (aRes.ok) { setStats(aData.stats); setAttempts(aData.attempts); }
+    if (sRes.ok) setSessions(sData.sessions ?? []);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -41,6 +46,8 @@ export default function ExamAdmin() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-5">
+      <SessionManager sessions={sessions} onChange={load} />
+
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Stat icon={<ClipboardList className="w-4 h-4 text-capelli-navy" />} label="Bank questions" value={stats.bankSize} tone="bg-capelli-navy/10" />
@@ -135,6 +142,23 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
   const [data, setData] = useState<any>(null);
   const [grades, setGrades] = useState<Record<string, { awardedPoints: number; graderNote: string }>>({});
   const [saving, setSaving] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+
+  async function aiSuggest() {
+    setAiBusy(true);
+    const res = await fetch(`/api/exam/attempt/${attemptId}/ai-grade`, { method: 'POST' });
+    const d = await res.json();
+    setAiBusy(false);
+    if (!res.ok) { toast({ title: d.error || 'AI grading unavailable', variant: 'destructive' }); return; }
+    setGrades((prev) => {
+      const next = { ...prev };
+      for (const s of d.suggestions as { responseId: string; suggestedPoints: number; rationale: string }[]) {
+        next[s.responseId] = { awardedPoints: s.suggestedPoints, graderNote: s.rationale ? `AI: ${s.rationale}` : (next[s.responseId]?.graderNote ?? '') };
+      }
+      return next;
+    });
+    toast({ title: 'AI suggested scores — review and adjust before finalizing', variant: 'success' });
+  }
 
   useEffect(() => {
     fetch(`/api/exam/attempt/${attemptId}`).then((r) => r.json()).then((d) => {
@@ -172,11 +196,39 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
       <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Back to results</button>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
-        <h2 className="font-bold text-gray-900">{data.taker?.name}</h2>
-        <p className="text-sm text-gray-500">
-          Multiple choice (auto): <strong className="text-gray-800">{data.autoScore}/{data.autoMax}</strong> · Written max {data.writtenMax} · Pass mark 80%
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-bold text-gray-900">{data.taker?.name}</h2>
+            <p className="text-sm text-gray-500">
+              Multiple choice (auto): <strong className="text-gray-800">{data.autoScore}/{data.autoMax}</strong> · Written max {data.writtenMax} · Pass mark 80%
+            </p>
+          </div>
+          {!readOnly && (
+            <Button onClick={aiSuggest} disabled={aiBusy} variant="outline" className="gap-1.5 flex-shrink-0">
+              {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-capelli-navy" />}
+              Suggest scores with AI
+            </Button>
+          )}
+        </div>
       </div>
+
+      {Array.isArray(data.breakdown) && data.breakdown.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+          <h3 className="text-sm font-bold text-capelli-navy mb-2">Competency breakdown</h3>
+          <div className="space-y-1.5">
+            {(data.breakdown as Breakdown[]).map((b) => (
+              <div key={b.competency} className="flex items-center gap-3 text-sm">
+                <span className="w-56 flex-shrink-0 text-gray-600 truncate">{b.competency}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn('h-full rounded-full', b.pct >= 80 ? 'bg-capelli-success' : b.pct >= 50 ? 'bg-amber-400' : 'bg-red-400')} style={{ width: `${b.pct}%` }} />
+                </div>
+                <span className="w-16 text-right text-gray-500">{b.earned}/{b.max}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Written scores update after you finalize; MCQ competencies reflect auto-grading.</p>
+        </div>
+      )}
 
       <h3 className="text-sm font-bold text-capelli-navy">Written answers to grade</h3>
       {written.map((r) => (
@@ -241,6 +293,85 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
               Finalize grade
             </Button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SessionManager({ sessions, onChange }: { sessions: SessionRow[]; onChange: () => void }) {
+  const { toast } = useToast();
+  const [title, setTitle] = useState('');
+  const [limit, setLimit] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function create() {
+    if (!title.trim()) return;
+    setBusy(true);
+    const res = await fetch('/api/exam/sessions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title.trim(), ...(limit ? { timeLimitMin: Number(limit) } : {}) }),
+    });
+    setBusy(false);
+    if (res.ok) { setTitle(''); setLimit(''); toast({ title: 'Exam opened — team members can now take it', variant: 'success' }); onChange(); }
+    else toast({ title: 'Could not open the exam', variant: 'destructive' });
+  }
+
+  async function toggle(id: string, isOpen: boolean) {
+    const res = await fetch('/api/exam/sessions', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, isOpen }),
+    });
+    if (res.ok) onChange();
+  }
+
+  const openCount = sessions.filter((s) => s.isOpen).length;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="font-semibold text-gray-800">Exam windows</h3>
+          <p className="text-xs text-gray-500">Open an exam when you want the team to sit it (e.g. twice a week). Members can only start while a window is open.</p>
+        </div>
+        <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', openCount ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
+          {openCount} open
+        </span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <input
+          value={title} onChange={(e) => setTitle(e.target.value)}
+          placeholder="Exam title, e.g. “Week 27 — Tuesday”"
+          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+        <input
+          value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ''))}
+          placeholder="Time limit (min, optional)"
+          className="w-full sm:w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+        <Button onClick={create} disabled={busy || !title.trim()} className="gap-1.5 bg-capelli-navy hover:bg-blue-900">
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Open exam
+        </Button>
+      </div>
+
+      {sessions.length > 0 && (
+        <div className="divide-y divide-gray-100 border-t border-gray-100">
+          {sessions.slice(0, 8).map((s) => (
+            <div key={s.id} className="flex items-center justify-between py-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className={cn('w-2 h-2 rounded-full', s.isOpen ? 'bg-green-500' : 'bg-gray-300')} />
+                <span className="font-medium text-gray-800">{s.title}</span>
+                <span className="text-xs text-gray-400">{s.attemptCount} attempt{s.attemptCount === 1 ? '' : 's'}{s.timeLimitMin ? ` · ${s.timeLimitMin} min` : ''}</span>
+              </div>
+              <button
+                onClick={() => toggle(s.id, !s.isOpen)}
+                className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg', s.isOpen ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50')}
+              >
+                {s.isOpen ? <><Lock className="w-3.5 h-3.5" /> Close</> : <><Unlock className="w-3.5 h-3.5" /> Reopen</>}
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
