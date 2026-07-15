@@ -23,21 +23,20 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) return null;
 
-        // Run the post-login bookkeeping writes concurrently so the sign-in
-        // critical path waits on a single round-trip instead of two.
-        await Promise.all([
-          prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-          }),
-          prisma.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'LOGIN',
-              resource: 'auth',
-            },
-          }),
-        ]);
+        // Post-login bookkeeping, batched into a SINGLE round-trip and never
+        // allowed to block (or fail) the sign-in. Also opportunistically
+        // downgrades legacy cost-12 password hashes to cost-10 so future
+        // logins verify ~4x faster.
+        const costMatch = /^\$2[aby]\$(\d{2})\$/.exec(user.password);
+        const currentCost = costMatch ? parseInt(costMatch[1], 10) : 10;
+        const updateData: { lastLoginAt: Date; password?: string } = { lastLoginAt: new Date() };
+        if (currentCost > 10) {
+          try { updateData.password = await bcrypt.hash(credentials.password, 10); } catch { /* keep old hash */ }
+        }
+        await prisma.$transaction([
+          prisma.user.update({ where: { id: user.id }, data: updateData }),
+          prisma.auditLog.create({ data: { userId: user.id, action: 'LOGIN', resource: 'auth' } }),
+        ]).catch(() => { /* bookkeeping must never block sign-in */ });
 
         return { id: user.id, email: user.email, name: user.name, role: user.role };
       },

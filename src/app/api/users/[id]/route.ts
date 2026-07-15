@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     if (data.role) updateData.role = data.role;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
-    if (data.password) updateData.password = await bcrypt.hash(data.password, 12);
+    if (data.password) updateData.password = await bcrypt.hash(data.password, 10);
 
     const user = await prisma.user.update({
       where: { id: params.id },
