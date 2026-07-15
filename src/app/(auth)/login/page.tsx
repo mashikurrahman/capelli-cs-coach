@@ -38,8 +38,9 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Invalid email or password. Please try again.');
     } else {
-      router.push('/dashboard');
-      router.refresh();
+      // The session cookie is already set, so navigating loads the dashboard
+      // authenticated in one fetch — no extra router.refresh() round-trip.
+      router.replace('/dashboard');
     }
   }
 
