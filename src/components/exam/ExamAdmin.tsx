@@ -62,9 +62,11 @@ export default function ExamAdmin() {
         {attempts.some((a) => a.status !== 'IN_PROGRESS') && (
           <a
             href="/api/exam/admin/export"
+            target="_blank"
+            rel="noopener noreferrer"
             className="press inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-capelli-navy text-white hover:bg-blue-900 transition-colors"
           >
-            <Download className="w-4 h-4" /> Download full report (.doc)
+            <Download className="w-4 h-4" /> Open full report (print / PDF)
           </a>
         )}
       </div>
@@ -114,7 +116,9 @@ export default function ExamAdmin() {
                       {a.status !== 'IN_PROGRESS' && (
                         <a
                           href={`/api/exam/admin/export?attemptId=${a.id}`}
-                          title="Download this answer sheet"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open this answer sheet (print / PDF)"
                           className="text-gray-400 hover:text-capelli-navy"
                         >
                           <Download className="w-4 h-4" />

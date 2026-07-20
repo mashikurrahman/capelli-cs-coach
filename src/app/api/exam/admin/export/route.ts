@@ -36,6 +36,11 @@ tr:nth-child(even) td { background: #f5f7fb; }
 .key { background: #eef5ff; border-left: 3pt solid #3b82f6; padding: 6pt 10pt; margin: 4pt 0; font-size: 10pt; }
 .mark-ok { color: #15803d; font-weight: bold; }
 .mark-no { color: #b91c1c; font-weight: bold; }
+body { max-width: 900px; margin: 0 auto; padding: 24px; }
+.print-hint { position: sticky; top: 0; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 18px; color: #9a3412; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.print-hint button { background: #0b2e6b; color: #fff; border: 0; border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; }
+@media print { .no-print { display: none !important; } body { max-width: none; padding: 0; } }
 `;
 
 function scoreLabel(a: { status: string; totalScore: number | null; maxScore: number; passed: boolean | null; autoScore: number | null; autoMax: number }): string {
@@ -171,19 +176,23 @@ ${opts}
     html += `</div>`;
   }
 
-  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name=ProgId content=Word.Document>
+  const emptyNote = attempts.length === 0
+    ? `<p class="muted">No submitted or graded attempts yet — once team members submit an exam, their answer sheets will appear here.</p>`
+    : '';
+
+  const page = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Capelli Exam Report ${today}</title>
-<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
-<style>${CSS}</style></head><body>${html}</body></html>`;
+<style>${CSS}</style></head>
+<body>
+<div class="print-hint no-print">
+  <span>📄 To save or share this report, use <strong>Print → “Save as PDF”</strong>.</span>
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+${html}${emptyNote}
+</body></html>`;
 
-  const who = attemptId && attempts[0] ? '-' + (attempts[0].user?.name ?? 'member').replace(/[^a-z0-9]+/gi, '-').toLowerCase() : '';
-  const filename = `capelli-exam-report${who}-${today}.doc`;
-
-  return new NextResponse(doc, {
-    headers: {
-      'Content-Type': 'application/msword; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
+  return new NextResponse(page, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
 }
