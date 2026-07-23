@@ -5,12 +5,19 @@ import { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { BarChart2, TrendingUp, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { BarChart2, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Activity, ArrowUpRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils/cn';
 import { formatIssueCategory, formatRelativeTime, getRiskColor } from '@/lib/utils/helpers';
 
 async function fetchAnalytics(days: number) {
   const res = await fetch(`/api/analytics?days=${days}`);
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+async function fetchTicketMix() {
+  const res = await fetch('/api/analytics/ticket-mix?recentDays=7');
   if (!res.ok) throw new Error('Failed');
   return res.json();
 }
@@ -29,6 +36,8 @@ export default function AnalyticsDashboard() {
     queryKey: ['analytics', days],
     queryFn: () => fetchAnalytics(days),
   });
+
+  const { data: mix } = useQuery({ queryKey: ['ticket-mix'], queryFn: fetchTicketMix });
 
   const summary = data?.summary ?? {};
   const topIssues: any[] = (data?.topIssues ?? []).map((t: any) => ({
@@ -108,6 +117,53 @@ export default function AnalyticsDashboard() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Ticket mix vs baseline (A3) */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+        <div className="flex items-start justify-between gap-3 flex-wrap mb-1">
+          <div>
+            <h2 className="font-semibold text-gray-800">Ticket mix vs baseline</h2>
+            <p className="text-xs text-gray-500">Last {mix?.recentDays ?? 7} days ({mix?.totals?.recent ?? 0} tickets) against the all-time mix ({mix?.totals?.allTime ?? 0} tickets).</p>
+          </div>
+        </div>
+
+        {mix?.spikes?.length > 0 && (
+          <div className="my-3 rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs font-semibold text-amber-800 mb-1.5 flex items-center gap-1.5"><ArrowUpRight className="w-4 h-4" /> Above baseline this week</p>
+            <div className="flex flex-wrap gap-2">
+              {mix.spikes.map((r: any) => (
+                <span key={r.category} className="text-xs bg-white border border-amber-200 rounded-full px-2.5 py-1 text-amber-900">
+                  {formatIssueCategory(r.category)} <strong>+{r.delta}pts</strong> ({r.recentPct}% vs {r.baselinePct}%)
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!mix ? (
+          <div className="h-40 bg-gray-100 rounded-lg animate-pulse mt-3" />
+        ) : mix.rows.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No tickets logged yet.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {mix.rows.slice(0, 10).map((r: any) => (
+              <div key={r.category} className="flex items-center gap-3 text-sm">
+                <span className="w-48 flex-shrink-0 text-gray-700 truncate">{formatIssueCategory(r.category)}</span>
+                <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-capelli-navy" style={{ width: `${Math.min(100, r.recentPct)}%` }} />
+                </div>
+                <span className="w-12 text-right tabular-nums text-gray-600">{r.recentPct}%</span>
+                <span className={cn('w-16 text-right tabular-nums inline-flex items-center justify-end gap-0.5 text-xs font-medium',
+                  r.delta > 0 ? 'text-capelli-danger' : r.delta < 0 ? 'text-capelli-success' : 'text-gray-400')}>
+                  {r.delta > 0 ? <TrendingUp className="w-3 h-3" /> : r.delta < 0 ? <TrendingDown className="w-3 h-3" /> : null}
+                  {r.delta > 0 ? '+' : ''}{r.delta}
+                </span>
+              </div>
+            ))}
+            <p className="text-[11px] text-gray-400 pt-1">Bar = share of last-{mix.recentDays}-day tickets. Right column = change vs the all-time baseline share (points).</p>
+          </div>
         )}
       </div>
 
