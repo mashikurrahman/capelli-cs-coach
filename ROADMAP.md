@@ -15,7 +15,7 @@ Built one at a time. ✅ done · 🔨 in this batch · ⬜ queued.
 - ✅ **Per-exam reports.** Each exam window has its own report (scoped by `sessionId`) instead of one combined dump; the "All-exams report" remains for a full sweep.
 
 ## Broader app (from the ticket-data ideas)
-- ⬜ **A1 — Automated QA rubric.** Score logged ticket sessions against the real failure modes; pre-flag risky ones.
-- ⬜ **A2 — kNN "nearest real ticket" matcher signal.** Embed labelled tickets; route novel phrasings by nearest resolved example.
-- ⬜ **A3 — Ticket-mix baseline analytics.** Surface the real ticket distribution and benchmark live volume against it.
-- ⬜ **A4 — Embed agent scenarios into the knowledge base.** Make the resolved-ticket patterns retrievable + citable in the AI analyzer.
+- ✅ **A1 — Automated QA rubric.** QA Review rows open a scoring panel; "AI pre-screen" grades the five rubric dimensions, flags guardrail breaches, and suggests status/risk for the reviewer to confirm and save.
+- ✅ **A2 — kNN "nearest real ticket" matcher signal.** The coach surfaces the nearest resolved-ticket precedents (embedded bank) for a substantial complaint, as a routing/handling hint.
+- ✅ **A3 — Ticket-mix baseline analytics.** "Ticket mix vs baseline" panel benchmarks the recent window against the all-time mix and flags categories spiking above baseline.
+- ✅ **A4 — Embed agent scenarios into the knowledge base.** Resolved-ticket precedents (70 exam scenarios + playbook) are embedded and cited in the AI analyzer's context via `[SIMILAR RESOLVED TICKETS]`. Shared bank with A2; seeded by `scripts/seed-precedents.ts`.

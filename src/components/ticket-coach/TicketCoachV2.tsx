@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, ChevronRight, RotateCcw, CheckCircle2, LayoutGrid, Loader2 } from 'lucide-react';
+import { Sparkles, ChevronRight, RotateCcw, CheckCircle2, LayoutGrid, Loader2, History } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import WorkflowRunner from './WorkflowRunner';
 import { matchWorkflows } from '@/lib/workflows/match';
@@ -24,6 +24,13 @@ interface Analysis {
   extracted: Record<string, string>;
 }
 
+interface Precedent {
+  complaint: string;
+  handling: string;
+  category: string | null;
+  similarity: number;
+}
+
 const EXAMPLES = [
   'I ordered a medium jersey but received a large. Order CS12345.',
   'My package says delivered but I never received it.',
@@ -43,6 +50,7 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
   const [hybridMatches, setHybridMatches] = useState<DisplayMatch[] | null>(null);
   const [hybridLoading, setHybridLoading] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [precedents, setPrecedents] = useState<Precedent[]>([]);
 
   // Instant keyword matches (on cleaned text) — shown immediately while the
   // hybrid (keyword + semantic) result is fetched in the background.
@@ -60,7 +68,7 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
   const reqId = useRef(0);
   useEffect(() => {
     const c = complaint.trim();
-    if (c.length < 6) { setHybridMatches(null); setHybridLoading(false); setAnalysis(null); return; }
+    if (c.length < 6) { setHybridMatches(null); setHybridLoading(false); setAnalysis(null); setPrecedents([]); return; }
     const id = ++reqId.current;
     setHybridLoading(true);
     const handle = setTimeout(async () => {
@@ -83,6 +91,7 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
         // auto-fill any details it pulled out (only into empty fields).
         const a: Analysis | undefined = data.analysis;
         setAnalysis(a ?? null);
+        setPrecedents(Array.isArray(data.precedents) ? data.precedents : []);
         if (a?.extracted) {
           if (a.extracted.orderNumber) setOrderNumber(prev => prev || a.extracted.orderNumber);
           if (a.extracted.clubName) setClubName(prev => prev || a.extracted.clubName);
@@ -112,7 +121,7 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
 
   function reset() {
     setPhase('input'); setComplaint(''); setOrderNumber(''); setClubName('');
-    setSelected(null); setBrowseAll(false); setHybridMatches(null); setAnalysis(null);
+    setSelected(null); setBrowseAll(false); setHybridMatches(null); setAnalysis(null); setPrecedents([]);
   }
 
   function complete() {
@@ -213,6 +222,27 @@ export default function TicketCoachV2({ templates }: { templates: TemplateLite[]
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Nearest resolved tickets (A2) */}
+        {precedents.length > 0 && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 mb-2">
+              <History className="w-3.5 h-3.5" /> Similar resolved tickets
+            </p>
+            <div className="space-y-2">
+              {precedents.map((p, i) => (
+                <details key={i} className="text-xs bg-white border border-emerald-100 rounded-lg p-2.5">
+                  <summary className="cursor-pointer text-gray-700 flex items-center gap-2">
+                    <span className="text-emerald-700 font-semibold tabular-nums">{p.similarity}%</span>
+                    <span className="truncate">{p.complaint}</span>
+                  </summary>
+                  <p className="mt-2 text-gray-600 whitespace-pre-wrap">{p.handling}</p>
+                </details>
+              ))}
+            </div>
+            <p className="text-[11px] text-emerald-700/70 mt-2">How the team resolved close cases — guidance, not a script.</p>
           </div>
         )}
 

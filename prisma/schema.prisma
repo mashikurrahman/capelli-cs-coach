@@ -736,3 +736,23 @@ model AppSetting {
 
   @@map("app_settings")
 }
+
+// ─── TICKET PRECEDENTS (A2 + A4) ──────────────────────────────────────────────
+// An embedded bank of resolved-ticket patterns (from the exam scenarios +
+// learned playbook). Powers "nearest resolved ticket" routing (A2) and gives
+// the AI analyzer citable real-handling precedents (A4).
+
+model TicketPrecedent {
+  id         String         @id @default(cuid())
+  complaint  String         // the customer situation (PII-scrubbed)
+  handling   String         // how experienced agents resolve it (model answer / rule)
+  category   IssueCategory?
+  competency String?        // slot label when sourced from the exam bank
+  source     String         @default("exam") // 'exam' | 'playbook' | 'manual'
+  tags       String[]
+  embedding  Unsupported("vector(768)")?
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+
+  @@map("ticket_precedents")
+}

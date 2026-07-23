@@ -24,13 +24,18 @@ export async function semanticSearch(
   query: string,
   topK = 8,
   minScore = 0.3,
-  excludeSensitive = true
+  excludeSensitive = true,
+  precomputedEmbedding?: number[]
 ): Promise<KBSearchResult[]> {
   let queryEmbedding: number[];
-  try {
-    queryEmbedding = await embed(query);
-  } catch {
-    return [];
+  if (precomputedEmbedding) {
+    queryEmbedding = precomputedEmbedding;
+  } else {
+    try {
+      queryEmbedding = await embed(query);
+    } catch {
+      return [];
+    }
   }
 
   const vec = `[${queryEmbedding.join(',')}]`;

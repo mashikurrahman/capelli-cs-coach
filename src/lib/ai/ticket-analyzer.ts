@@ -1,5 +1,6 @@
-import { generateJson, getChatModel } from './client';
+import { generateJson, getChatModel, embedText } from './client';
 import { semanticSearch, buildContext } from './embeddings';
+import { searchPrecedents, buildPrecedentContext } from './precedents';
 import { buildAnalysisPrompt } from './prompts';
 import { redactPII } from '@/lib/utils/helpers';
 import type { TicketInput, AnalysisResult } from '@/types';
@@ -12,11 +13,21 @@ export async function analyzeTicket(input: TicketInput): Promise<AnalysisResult>
     input.orderNumber && `order ${input.orderNumber}`,
   ].filter(Boolean).join(' ');
 
-  // Retrieve relevant training material via RAG.
-  // Keep this lean: too much context blows past free-tier token limits
-  // (Groq counts input + maxOutputTokens against its per-minute cap).
-  const chunks = await semanticSearch(searchQuery, 6, 0.3);
-  const context = buildContext(chunks, 550);
+  // Embed the query once and reuse it for both the KB search and the
+  // resolved-ticket precedent search (A4) — no extra embedding cost.
+  let queryEmbedding: number[] | undefined;
+  try { queryEmbedding = await embedText(searchQuery); } catch { queryEmbedding = undefined; }
+
+  // Retrieve relevant training material via RAG + the nearest resolved-ticket
+  // precedents. Keep this lean: too much context blows past free-tier token
+  // limits (the provider counts input + maxOutputTokens against its cap).
+  const [chunks, precedents] = await Promise.all([
+    semanticSearch(searchQuery, 6, 0.3, true, queryEmbedding),
+    searchPrecedents(searchQuery, 3, 0.4, queryEmbedding),
+  ]);
+  const context = [buildContext(chunks, 550), buildPrecedentContext(precedents)]
+    .filter(Boolean)
+    .join('\n\n');
 
   // Redact PII before sending to AI
   const safeInput: TicketInput = {
