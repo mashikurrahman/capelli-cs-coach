@@ -11,7 +11,7 @@ Built one at a time. ✅ done · 🔨 in this batch · ⬜ queued.
 - ✅ **E6 — Attempt controls.** Locks a window once a member passes it; caps sittings per window (MAX_ATTEMPTS_PER_SESSION). (Per-attempt option shuffling deferred — the paper is already randomized per attempt.)
 - ✅ **E7 — Pass certificate.** Print-ready certificate page (name / exam / score / date / cert ID) on a passed, graded exam; linked from the taker's review and the admin table.
 - ✅ **E8 — "Review your mistakes" for takers.** After submitting, the taker reviews each MCQ (their pick vs correct answer), written answers with grader feedback + the model answer (once graded), a per-topic competency breakdown, and a certificate link if they passed.
-- ⬜ **E9 — Question-bank admin UI.** Add / edit / retire questions in-app instead of re-seeding from files.
+- ✅ **E9 — Question-bank admin UI.** Add / edit / retire questions in-app instead of re-seeding from files. "Manage question bank" panel on the Exam Results page: create MCQ/written questions, edit, filter, retire (soft-delete when used in past attempts, hard-delete when unused), and restore.
 - ✅ **Per-exam reports.** Each exam window has its own report (scoped by `sessionId`) instead of one combined dump; the "All-exams report" remains for a full sweep.
 
 ## Broader app (from the ticket-data ideas)

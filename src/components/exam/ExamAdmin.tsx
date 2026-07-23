@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles, FileText, BarChart3, Award } from 'lucide-react';
+import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles, FileText, BarChart3, Award, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { useToast } from '@/components/ui/use-toast';
+import QuestionBank from '@/components/exam/QuestionBank';
 
 interface AttemptRow {
   id: string; taker: string; email: string; status: string; sessionTitle: string | null;
@@ -29,6 +30,7 @@ export default function ExamAdmin() {
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [showItems, setShowItems] = useState(false);
+  const [showBank, setShowBank] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -48,6 +50,17 @@ export default function ExamAdmin() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-5">
       <SessionManager sessions={sessions} onChange={load} />
+
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowBank((v) => !v)}
+          className="press inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <Library className="w-4 h-4" /> {showBank ? 'Hide question bank' : 'Manage question bank'}
+        </button>
+      </div>
+
+      {showBank && <QuestionBank />}
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
