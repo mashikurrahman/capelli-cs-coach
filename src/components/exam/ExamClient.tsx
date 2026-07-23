@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 
@@ -32,6 +32,7 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
 
   const answeredCount = useMemo(
     () => questions.filter((q) => {
@@ -76,6 +77,11 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
     } catch (e: any) { setError(e.message); } finally { setLoading(false); }
   }
 
+  // ── Review a finished attempt (see mistakes) ────────────────────────────────
+  if (reviewId) {
+    return <AttemptReview attemptId={reviewId} onBack={() => setReviewId(null)} />;
+  }
+
   // ── Result screen ──────────────────────────────────────────────────────────
   if (phase === 'done' && result) {
     const awaiting = result.awaitingGrading;
@@ -103,7 +109,12 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
               Final score: <strong>{result.autoScore} / {result.maxScore}</strong> — {result.passed ? 'PASSED ✓' : 'Did not pass (80% required)'}
             </div>
           )}
-          <Button className="mt-6" onClick={() => window.location.reload()}>Back to exam home</Button>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            {attemptId && (
+              <Button onClick={() => setReviewId(attemptId)} className="bg-capelli-navy hover:bg-blue-900">Review my answers</Button>
+            )}
+            <Button variant="outline" onClick={() => window.location.reload()}>Back to exam home</Button>
+          </div>
         </div>
       </div>
     );
@@ -171,10 +182,18 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
 
       {initialAttempts.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
-          <div className="p-4 border-b border-gray-100"><h3 className="font-semibold text-gray-800">Your past attempts</h3></div>
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-800">Your past attempts</h3>
+            <p className="text-xs text-gray-500">Click a finished attempt to review your answers and see what you missed.</p>
+          </div>
           <div className="divide-y divide-gray-100">
             {initialAttempts.map((a) => (
-              <div key={a.id} className="flex items-center justify-between px-4 py-3 text-sm">
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => { if (a.status === 'IN_PROGRESS') startExam(); else setReviewId(a.id); }}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', STATUS_BADGE[a.status] ?? 'bg-gray-100 text-gray-600')}>
                     {a.status === 'IN_PROGRESS' ? 'In progress' : a.status === 'SUBMITTED' ? 'Awaiting grading' : 'Graded'}
@@ -191,8 +210,9 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
                   ) : (
                     <span className="text-amber-600">Resume →</span>
                   )}
+                  {a.status !== 'IN_PROGRESS' && <span className="text-capelli-navy text-xs">Review →</span>}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -206,6 +226,113 @@ function SectionHeading({ title, sub }: { title: string; sub: string }) {
     <div className="mt-6 mb-3 first:mt-0">
       <h3 className="text-base font-bold text-capelli-navy">{title}</h3>
       <p className="text-xs text-gray-500">{sub}</p>
+    </div>
+  );
+}
+
+interface ReviewResp {
+  id: string; order: number; type: 'MCQ' | 'WRITTEN'; competency: string; prompt: string;
+  options: string[]; points: number; selectedIndex: number | null; isCorrect: boolean | null;
+  correctIndex: number | null; writtenAnswer: string | null; awardedPoints: number | null; graderNote: string | null;
+}
+interface ReviewBreakdown { competency: string; earned: number; max: number; pct: number }
+
+function AttemptReview({ attemptId, onBack }: { attemptId: string; onBack: () => void }) {
+  const [data, setData] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/exam/attempt/${attemptId}`)
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => { if (ok) setData(d); else setErr(d.error || 'Could not load your attempt'); })
+      .catch(() => setErr('Could not load your attempt'));
+  }, [attemptId]);
+
+  if (err) return <div className="p-6 max-w-2xl mx-auto"><button onClick={onBack} className="text-sm text-gray-500 mb-4 flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Back</button><p className="text-red-600 text-sm">{err}</p></div>;
+  if (!data) return <div className="p-10 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>;
+
+  const written: ReviewResp[] = data.responses.filter((r: ReviewResp) => r.type === 'WRITTEN');
+  const mcq: ReviewResp[] = data.responses.filter((r: ReviewResp) => r.type === 'MCQ');
+  const mcqCorrect = mcq.filter((r) => r.isCorrect).length;
+  const graded = data.status === 'GRADED';
+
+  return (
+    <div className="p-6 max-w-3xl mx-auto space-y-4 pb-16">
+      <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Back to exam home</button>
+
+      {/* Summary */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+        <h2 className="font-bold text-gray-900 text-lg">Your results</h2>
+        {graded && data.totalScore != null ? (
+          <p className={cn('text-sm font-semibold mt-1', data.passed ? 'text-capelli-success' : 'text-capelli-danger')}>
+            {data.totalScore}/{data.maxScore} — {data.passed ? 'PASSED ✓' : 'Did not pass (80% needed)'}
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500 mt-1">Multiple choice: <strong>{data.autoScore}/{data.autoMax}</strong> · written section awaiting manager grading</p>
+        )}
+      </div>
+
+      {/* Competency breakdown */}
+      {Array.isArray(data.breakdown) && data.breakdown.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
+          <h3 className="text-sm font-bold text-capelli-navy mb-2">How you did by topic</h3>
+          <div className="space-y-1.5">
+            {(data.breakdown as ReviewBreakdown[]).map((b) => (
+              <div key={b.competency} className="flex items-center gap-3 text-sm">
+                <span className="w-52 flex-shrink-0 text-gray-600 truncate">{b.competency}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn('h-full rounded-full', b.pct >= 80 ? 'bg-capelli-success' : b.pct >= 50 ? 'bg-amber-400' : 'bg-red-400')} style={{ width: `${b.pct}%` }} />
+                </div>
+                <span className="w-14 text-right text-gray-500">{b.earned}/{b.max}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Section B — MCQ mistakes */}
+      <h3 className="text-sm font-bold text-capelli-navy">Multiple choice — {mcqCorrect}/{mcq.length} correct</h3>
+      {mcq.map((r, i) => (
+        <div key={r.id} className={cn('bg-white rounded-xl border shadow-card p-4', r.isCorrect ? 'border-gray-200' : 'border-red-200')}>
+          <div className="flex items-start gap-2 mb-2">
+            {r.isCorrect ? <CheckCircle2 className="w-4 h-4 text-capelli-success flex-shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 text-capelli-danger flex-shrink-0 mt-0.5" />}
+            <p className="text-sm text-gray-800"><span className="font-semibold">Q{written.length + i + 1}.</span> {r.prompt}</p>
+          </div>
+          <div className="space-y-1 pl-6">
+            {r.options.map((opt, oi) => {
+              const isCorrect = oi === r.correctIndex;
+              const isChosen = oi === r.selectedIndex;
+              return (
+                <div key={oi} className={cn('text-sm px-2 py-1 rounded flex items-center gap-2',
+                  isCorrect && 'bg-green-50 text-green-800 font-medium',
+                  isChosen && !isCorrect && 'bg-red-50 text-red-800 line-through')}>
+                  <span className="font-semibold">{String.fromCharCode(65 + oi)}.</span>
+                  <span>{opt}</span>
+                  {isCorrect && <span className="text-xs text-green-700">✓ correct answer</span>}
+                  {isChosen && !isCorrect && <span className="text-xs text-red-700 no-underline">← your answer</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Section A — written */}
+      <h3 className="text-sm font-bold text-capelli-navy mt-4">Written answers</h3>
+      {written.map((r, i) => (
+        <div key={r.id} className="bg-white rounded-xl border border-gray-200 shadow-card p-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Q{i + 1} · {r.competency} · {graded ? `${r.awardedPoints ?? 0}/${r.points}` : `${r.points} pts`}</p>
+          <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap">{r.prompt}</p>
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
+            <p className="text-xs font-semibold text-gray-500 mb-1">Your answer</p>
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">{r.writtenAnswer || <span className="text-gray-400 italic">(left blank)</span>}</p>
+          </div>
+          {graded && r.graderNote && (
+            <p className="text-xs text-capelli-navy mt-2"><strong>Grader feedback:</strong> {r.graderNote}</p>
+          )}
+          {!graded && <p className="text-xs text-gray-400 mt-2">Awaiting manager grading.</p>}
+        </div>
+      ))}
     </div>
   );
 }
