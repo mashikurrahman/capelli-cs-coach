@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle, ArrowLeft, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 
@@ -18,13 +18,20 @@ interface Question {
 }
 type Answer = { selectedIndex?: number; writtenAnswer?: string };
 
+function fmtTime(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
 const STATUS_BADGE: Record<string, string> = {
   IN_PROGRESS: 'bg-amber-100 text-amber-700',
   SUBMITTED: 'bg-blue-100 text-blue-700',
   GRADED: 'bg-slate-100 text-slate-700',
 };
 
-export default function ExamClient({ initialAttempts, bankReady }: { initialAttempts: AttemptRow[]; bankReady: boolean }) {
+interface OpenExam { title: string; timeLimitMin: number | null }
+
+export default function ExamClient({ initialAttempts, bankReady, openExam }: { initialAttempts: AttemptRow[]; bankReady: boolean; openExam: OpenExam | null }) {
   const [phase, setPhase] = useState<'idle' | 'taking' | 'done'>('idle');
   const [loading, setLoading] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -33,6 +40,31 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
+  // Timer (E5): anchored to the attempt's server startedAt so it can't be reset.
+  const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [timeLimitMin, setTimeLimitMin] = useState<number | null>(null);
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const autoSubmitRef = useRef(false);
+
+  // Countdown + auto-submit when the clock hits zero.
+  useEffect(() => {
+    if (phase !== 'taking' || !startedAt || !timeLimitMin) return;
+    const deadline = new Date(startedAt).getTime() + timeLimitMin * 60_000;
+    const tick = () => {
+      const rem = deadline - Date.now();
+      setRemainingMs(rem);
+      if (rem <= 0 && !autoSubmitRef.current) {
+        autoSubmitRef.current = true;
+        void submitExam(true);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, startedAt, timeLimitMin]);
 
   const answeredCount = useMemo(
     () => questions.filter((q) => {
@@ -50,6 +82,9 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
       if (!res.ok) throw new Error(data.error || 'Could not start the exam');
       setAttemptId(data.attemptId);
       setQuestions(data.questions);
+      setStartedAt(data.startedAt ?? null);
+      setTimeLimitMin(data.timeLimitMin ?? null);
+      autoSubmitRef.current = false;
       const seed: Record<string, Answer> = {};
       for (const q of data.questions as Question[]) {
         if (q.selectedIndex != null) seed[q.id] = { selectedIndex: q.selectedIndex };
@@ -61,17 +96,18 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
     } catch (e: any) { setError(e.message); } finally { setLoading(false); }
   }
 
-  async function submitExam() {
+  async function submitExam(auto = false) {
     if (!attemptId) return;
     setLoading(true); setError(null);
     try {
       const res = await fetch(`/api/exam/attempt/${attemptId}/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        // Read the freshest answers (matters for the auto-submit path).
+        body: JSON.stringify({ answers: answersRef.current }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not submit the exam');
-      setResult(data);
+      setResult({ ...data, autoSubmitted: auto });
       setPhase('done');
       window.scrollTo(0, 0);
     } catch (e: any) { setError(e.message); } finally { setLoading(false); }
@@ -96,6 +132,9 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
             <XCircle className="w-14 h-14 text-capelli-danger mx-auto mb-3" />
           )}
           <h2 className="text-2xl font-bold text-gray-900">Exam submitted</h2>
+          {result.autoSubmitted && (
+            <p className="text-sm text-amber-600 mt-1 inline-flex items-center gap-1"><Timer className="w-4 h-4" /> Time ran out — your exam was submitted automatically.</p>
+          )}
           <p className="text-gray-500 mt-1">
             Auto-graded multiple choice: <span className="font-semibold text-gray-800">{result.autoScore} / {result.autoMax}</span>
           </p>
@@ -141,10 +180,18 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
         {/* Sticky submit bar */}
         <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 backdrop-blur px-6 py-3 no-print">
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-            <span className="text-sm text-gray-500">
-              Answered <strong className="text-gray-800">{answeredCount}</strong> / {questions.length}
-            </span>
-            <Button onClick={submitExam} disabled={loading} className="gap-2 bg-capelli-navy hover:bg-blue-900">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">
+                Answered <strong className="text-gray-800">{answeredCount}</strong> / {questions.length}
+              </span>
+              {remainingMs != null && (
+                <span className={cn('inline-flex items-center gap-1.5 text-sm font-semibold tabular-nums',
+                  remainingMs <= 120_000 ? 'text-capelli-danger' : 'text-gray-700')}>
+                  <Timer className="w-4 h-4" /> {fmtTime(remainingMs)}
+                </span>
+              )}
+            </div>
+            <Button onClick={() => submitExam(false)} disabled={loading} className="gap-2 bg-capelli-navy hover:bg-blue-900">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               Submit exam
             </Button>
@@ -167,15 +214,29 @@ export default function ExamClient({ initialAttempts, bankReady }: { initialAtte
             <p className="text-sm text-gray-500">30 questions · 10 written scenarios + 20 multiple choice · pass mark 80%</p>
           </div>
         </div>
-        <ul className="text-sm text-gray-600 space-y-1 mt-3 mb-5 list-disc pl-5">
+        <ul className="text-sm text-gray-600 space-y-1 mt-3 mb-4 list-disc pl-5">
           <li>Your paper is drawn at random from the question bank — no two attempts are the same.</li>
           <li>Multiple-choice is graded instantly; your written answers are reviewed by a manager.</li>
-          <li>You can't pause once you start, so set aside ~45 minutes.</li>
+          {openExam?.timeLimitMin
+            ? <li className="font-medium text-gray-800">You'll have <strong>{openExam.timeLimitMin} minutes</strong> — the exam submits automatically when time runs out, and the clock keeps running if you close the tab.</li>
+            : <li>There's no time limit set, but set aside ~45 minutes to finish in one sitting.</li>}
         </ul>
+
+        {openExam ? (
+          <div className="mb-4 rounded-xl bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+            <span className="font-semibold">Open now:</span> {openExam.title}
+            {openExam.timeLimitMin ? <span className="inline-flex items-center gap-1 ml-2"><Timer className="w-3.5 h-3.5" /> {openExam.timeLimitMin} min</span> : null}
+          </div>
+        ) : (
+          <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            No exam is currently open. Your admin needs to open an exam window before you can start.
+          </div>
+        )}
+
         {error && <p className="text-sm text-red-600 mb-3 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" />{error}</p>}
-        <Button onClick={startExam} disabled={loading || !bankReady} size="lg" className="gap-2 bg-capelli-navy hover:bg-blue-900">
+        <Button onClick={() => startExam()} disabled={loading || !bankReady || !openExam} size="lg" className="gap-2 bg-capelli-navy hover:bg-blue-900">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-          {bankReady ? 'Start exam' : 'Exam not available yet'}
+          {!bankReady ? 'Exam not available yet' : !openExam ? 'No exam open' : 'Start exam'}
         </Button>
         {!bankReady && <p className="text-xs text-amber-600 mt-2">The question bank hasn't been set up yet — ask an admin to seed it.</p>}
       </div>

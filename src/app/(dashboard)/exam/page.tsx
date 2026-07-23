@@ -12,7 +12,7 @@ export default async function ExamPage() {
   if (!session?.user) redirect('/login');
   const userId = (session.user as { id: string }).id;
 
-  const [attempts, bankSize] = await Promise.all([
+  const [attempts, bankSize, openSession] = await Promise.all([
     prisma.examAttempt.findMany({
       where: { userId },
       orderBy: { startedAt: 'desc' },
@@ -24,6 +24,11 @@ export default async function ExamPage() {
       },
     }),
     prisma.examQuestion.count({ where: { isActive: true } }),
+    prisma.examSession.findFirst({
+      where: { isOpen: true },
+      orderBy: { createdAt: 'desc' },
+      select: { title: true, timeLimitMin: true },
+    }),
   ]);
 
   return (
@@ -33,6 +38,7 @@ export default async function ExamPage() {
         <ExamClient
           initialAttempts={attempts.map((a) => ({ ...a, startedAt: a.startedAt.toISOString(), submittedAt: a.submittedAt?.toISOString() ?? null, gradedAt: a.gradedAt?.toISOString() ?? null }))}
           bankReady={bankSize > 0}
+          openExam={openSession ? { title: openSession.title, timeLimitMin: openSession.timeLimitMin } : null}
         />
       </div>
     </div>

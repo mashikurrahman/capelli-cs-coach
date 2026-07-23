@@ -22,15 +22,21 @@ export async function POST() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const userId = (session.user as { id: string }).id;
 
-  // Resume an in-progress attempt instead of starting a second one.
+  // Resume an in-progress attempt instead of starting a second one. The timer is
+  // anchored to the original startedAt, so reopening can't reset the clock.
   const existing = await prisma.examAttempt.findFirst({
     where: { userId, status: 'IN_PROGRESS' },
-    include: { responses: { orderBy: { order: 'asc' }, include: { question: true } } },
+    include: {
+      session: { select: { timeLimitMin: true } },
+      responses: { orderBy: { order: 'asc' }, include: { question: true } },
+    },
   });
   if (existing) {
     return NextResponse.json({
       attemptId: existing.id,
       resumed: true,
+      startedAt: existing.startedAt,
+      timeLimitMin: existing.session?.timeLimitMin ?? null,
       maxScore: existing.maxScore,
       questions: existing.responses.map((r) => ({
         ...sanitize(r.question, r.order),
@@ -85,6 +91,7 @@ export async function POST() {
     attemptId: attempt.id,
     resumed: false,
     sessionTitle: openSession.title,
+    startedAt: attempt.startedAt,
     timeLimitMin: openSession.timeLimitMin,
     maxScore,
     questions: orderedIds.map((id, i) => sanitize(byId.get(id)!, i)),
