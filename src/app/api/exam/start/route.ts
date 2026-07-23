@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { assembleExam } from '@/lib/exam/build-exam';
+import { assembleExam, MAX_ATTEMPTS_PER_SESSION } from '@/lib/exam/build-exam';
 
 /** Taker-safe question shape (no correct answers / model answers). */
 function sanitize(q: { id: string; type: string; competency: string; prompt: string; options: string[]; points: number }, order: number) {
@@ -53,6 +53,22 @@ export async function POST() {
   });
   if (!openSession) {
     return NextResponse.json({ error: 'No exam is currently open. Ask your admin to open one.' }, { status: 409 });
+  }
+
+  // E6 — attempt controls. Once a member has passed this window it's locked for
+  // them, and each member gets a capped number of sittings per window.
+  const priorFinished = await prisma.examAttempt.findMany({
+    where: { userId, sessionId: openSession.id, status: { in: ['SUBMITTED', 'GRADED'] } },
+    select: { passed: true },
+  });
+  if (priorFinished.some((a) => a.passed)) {
+    return NextResponse.json({ error: "You've already passed this exam — no need to re-sit it." }, { status: 409 });
+  }
+  if (priorFinished.length >= MAX_ATTEMPTS_PER_SESSION) {
+    return NextResponse.json(
+      { error: `You've used all ${MAX_ATTEMPTS_PER_SESSION} attempts for this exam. Ask your admin to open a new window for another go.` },
+      { status: 409 },
+    );
   }
 
   const pool = await prisma.examQuestion.findMany({

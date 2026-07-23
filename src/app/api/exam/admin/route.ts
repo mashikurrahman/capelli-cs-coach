@@ -12,7 +12,10 @@ export async function GET() {
 
   const attempts = await prisma.examAttempt.findMany({
     orderBy: [{ status: 'asc' }, { submittedAt: 'desc' }, { startedAt: 'desc' }],
-    include: { user: { select: { name: true, email: true } } },
+    include: {
+      user: { select: { name: true, email: true } },
+      session: { select: { title: true } },
+    },
     take: 200,
   });
 
@@ -31,6 +34,7 @@ export async function GET() {
       id: a.id,
       taker: a.user?.name ?? 'Unknown',
       email: a.user?.email ?? '',
+      sessionTitle: a.session?.title ?? null,
       status: a.status,
       autoScore: a.autoScore,
       autoMax: a.autoMax,

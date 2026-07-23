@@ -59,11 +59,13 @@ export async function GET(req: NextRequest) {
   if (!GRADER_ROLES.includes(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const attemptId = req.nextUrl.searchParams.get('attemptId');
+  const sessionId = req.nextUrl.searchParams.get('sessionId');
 
   const attempts = await prisma.examAttempt.findMany({
     where: {
       status: { in: ['SUBMITTED', 'GRADED'] },
       ...(attemptId ? { id: attemptId } : {}),
+      ...(sessionId ? { sessionId } : {}),
     },
     orderBy: [{ submittedAt: 'desc' }],
     include: {
@@ -71,6 +73,11 @@ export async function GET(req: NextRequest) {
       responses: { orderBy: { order: 'asc' }, include: { question: true } },
     },
   });
+
+  // When scoped to one exam window, title the report after it.
+  const examSession = sessionId
+    ? await prisma.examSession.findUnique({ where: { id: sessionId }, select: { title: true } })
+    : null;
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -87,7 +94,8 @@ export async function GET(req: NextRequest) {
       awardedPoints: r.awardedPoints, isCorrect: r.isCorrect,
     })));
 
-  let html = `<h1>Capelli Sport — Certification Exam Report</h1>
+  const heading = examSession ? `Certification Exam Report — ${esc(examSession.title)}` : 'Certification Exam Report';
+  let html = `<h1>Capelli Sport — ${heading}</h1>
 <p class="muted">Generated ${today} · ${attempts.length} attempt(s)${attemptId ? '' : ` · ${graded.length} graded · avg ${avgPct}% · ${passCount}/${graded.length} passed`}</p>`;
 
   if (!attemptId) {
@@ -177,12 +185,12 @@ ${opts}
   }
 
   const emptyNote = attempts.length === 0
-    ? `<p class="muted">No submitted or graded attempts yet — once team members submit an exam, their answer sheets will appear here.</p>`
+    ? `<p class="muted">No submitted or graded attempts${examSession ? ` for “${esc(examSession.title)}”` : ''} yet — once team members submit this exam, their answer sheets will appear here.</p>`
     : '';
 
   const page = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Capelli Exam Report ${today}</title>
+<title>Capelli Exam Report${examSession ? ` — ${esc(examSession.title)}` : ''} ${today}</title>
 <style>${CSS}</style></head>
 <body>
 <div class="print-hint no-print">

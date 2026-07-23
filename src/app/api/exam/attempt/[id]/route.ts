@@ -24,8 +24,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Graders see the model answers (grading key); takers reviewing their own
-  // finished attempt see MCQ correctness but not the written grading key.
+  // Graders see the model answers any time. Takers see them only once their
+  // attempt is fully GRADED — so after results are out they can learn the
+  // ideal answer, without leaking the key before/while it's being marked.
+  const canSeeModel = isGrader || attempt.status === 'GRADED';
   const responses = attempt.responses.map((r) => ({
     id: r.id,
     order: r.order,
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     writtenAnswer: r.writtenAnswer,
     awardedPoints: r.awardedPoints,
     graderNote: r.graderNote,
-    modelAnswer: isGrader ? r.question.modelAnswer : null,
+    modelAnswer: canSeeModel ? r.question.modelAnswer : null,
   }));
 
   return NextResponse.json({

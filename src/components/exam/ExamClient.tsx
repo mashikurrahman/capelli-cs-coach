@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle, ArrowLeft, Timer } from 'lucide-react';
+import { GraduationCap, Play, CheckCircle2, XCircle, Clock, Loader2, AlertTriangle, ArrowLeft, Timer, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 
@@ -295,6 +295,7 @@ interface ReviewResp {
   id: string; order: number; type: 'MCQ' | 'WRITTEN'; competency: string; prompt: string;
   options: string[]; points: number; selectedIndex: number | null; isCorrect: boolean | null;
   correctIndex: number | null; writtenAnswer: string | null; awardedPoints: number | null; graderNote: string | null;
+  modelAnswer: string | null;
 }
 interface ReviewBreakdown { competency: string; earned: number; max: number; pct: number }
 
@@ -323,14 +324,28 @@ function AttemptReview({ attemptId, onBack }: { attemptId: string; onBack: () =>
 
       {/* Summary */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5">
-        <h2 className="font-bold text-gray-900 text-lg">Your results</h2>
-        {graded && data.totalScore != null ? (
-          <p className={cn('text-sm font-semibold mt-1', data.passed ? 'text-capelli-success' : 'text-capelli-danger')}>
-            {data.totalScore}/{data.maxScore} — {data.passed ? 'PASSED ✓' : 'Did not pass (80% needed)'}
-          </p>
-        ) : (
-          <p className="text-sm text-gray-500 mt-1">Multiple choice: <strong>{data.autoScore}/{data.autoMax}</strong> · written section awaiting manager grading</p>
-        )}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-bold text-gray-900 text-lg">Your results</h2>
+            {graded && data.totalScore != null ? (
+              <p className={cn('text-sm font-semibold mt-1', data.passed ? 'text-capelli-success' : 'text-capelli-danger')}>
+                {data.totalScore}/{data.maxScore} — {data.passed ? 'PASSED ✓' : 'Did not pass (80% needed)'}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Multiple choice: <strong>{data.autoScore}/{data.autoMax}</strong> · written section awaiting manager grading</p>
+            )}
+          </div>
+          {graded && data.passed && (
+            <a
+              href={`/api/exam/certificate?attemptId=${attemptId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+            >
+              <Award className="w-4 h-4" /> Certificate
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Competency breakdown */}
@@ -390,6 +405,12 @@ function AttemptReview({ attemptId, onBack }: { attemptId: string; onBack: () =>
           </div>
           {graded && r.graderNote && (
             <p className="text-xs text-capelli-navy mt-2"><strong>Grader feedback:</strong> {r.graderNote}</p>
+          )}
+          {graded && r.modelAnswer && (
+            <div className="mt-2 rounded-lg bg-blue-50/70 border border-blue-100 p-3">
+              <p className="text-xs font-semibold text-capelli-navy mb-1">Model answer — what a strong response covers</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.modelAnswer}</p>
+            </div>
           )}
           {!graded && <p className="text-xs text-gray-400 mt-2">Awaiting manager grading.</p>}
         </div>

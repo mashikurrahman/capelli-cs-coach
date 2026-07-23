@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles } from 'lucide-react';
+import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles, FileText, BarChart3, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AttemptRow {
-  id: string; taker: string; email: string; status: string;
+  id: string; taker: string; email: string; status: string; sessionTitle: string | null;
   autoScore: number | null; autoMax: number; writtenScore: number | null; writtenMax: number;
   totalScore: number | null; maxScore: number; passed: boolean | null;
   startedAt: string; submittedAt: string | null; gradedAt: string | null;
@@ -28,6 +28,7 @@ export default function ExamAdmin() {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [showItems, setShowItems] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -57,19 +58,32 @@ export default function ExamAdmin() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-800">Attempts</h3>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 className="font-semibold text-gray-800">Attempts</h3>
+          <p className="text-xs text-gray-500">Each exam window has its own report above (the <span className="text-capelli-navy font-medium">Report</span> link). The button here covers every exam at once.</p>
+        </div>
         {attempts.some((a) => a.status !== 'IN_PROGRESS') && (
-          <a
-            href="/api/exam/admin/export"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="press inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-capelli-navy text-white hover:bg-blue-900 transition-colors"
-          >
-            <Download className="w-4 h-4" /> Open full report (print / PDF)
-          </a>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowItems((v) => !v)}
+              className="press inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4" /> {showItems ? 'Hide item analysis' : 'Item analysis'}
+            </button>
+            <a
+              href="/api/exam/admin/export"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="press inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-capelli-navy text-white hover:bg-blue-900 transition-colors"
+            >
+              <Download className="w-4 h-4" /> All-exams report
+            </a>
+          </div>
         )}
       </div>
+
+      {showItems && <ItemAnalysisPanel />}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-card overflow-hidden">
         {loading ? (
@@ -93,6 +107,7 @@ export default function ExamAdmin() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-800">{a.taker}</p>
                     <p className="text-xs text-gray-400">{a.email}</p>
+                    {a.sessionTitle && <p className="text-xs text-capelli-navy/70 mt-0.5">{a.sessionTitle}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={a.status} />
@@ -113,6 +128,17 @@ export default function ExamAdmin() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
+                      {a.status === 'GRADED' && a.passed && (
+                        <a
+                          href={`/api/exam/certificate?attemptId=${a.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open pass certificate (print / PDF)"
+                          className="text-amber-500 hover:text-amber-600"
+                        >
+                          <Award className="w-4 h-4" />
+                        </a>
+                      )}
                       {a.status !== 'IN_PROGRESS' && (
                         <a
                           href={`/api/exam/admin/export?attemptId=${a.id}`}
@@ -363,17 +389,94 @@ function SessionManager({ sessions, onChange }: { sessions: SessionRow[]; onChan
         <div className="divide-y divide-gray-100 border-t border-gray-100">
           {sessions.slice(0, 8).map((s) => (
             <div key={s.id} className="flex items-center justify-between py-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className={cn('w-2 h-2 rounded-full', s.isOpen ? 'bg-green-500' : 'bg-gray-300')} />
-                <span className="font-medium text-gray-800">{s.title}</span>
-                <span className="text-xs text-gray-400">{s.attemptCount} attempt{s.attemptCount === 1 ? '' : 's'}{s.timeLimitMin ? ` · ${s.timeLimitMin} min` : ''}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={cn('w-2 h-2 rounded-full flex-shrink-0', s.isOpen ? 'bg-green-500' : 'bg-gray-300')} />
+                <span className="font-medium text-gray-800 truncate">{s.title}</span>
+                <span className="text-xs text-gray-400 flex-shrink-0">{s.attemptCount} attempt{s.attemptCount === 1 ? '' : 's'}{s.timeLimitMin ? ` · ${s.timeLimitMin} min` : ''}</span>
               </div>
-              <button
-                onClick={() => toggle(s.id, !s.isOpen)}
-                className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg', s.isOpen ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50')}
-              >
-                {s.isOpen ? <><Lock className="w-3.5 h-3.5" /> Close</> : <><Unlock className="w-3.5 h-3.5" /> Reopen</>}
-              </button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {s.attemptCount > 0 && (
+                  <a
+                    href={`/api/exam/admin/export?sessionId=${s.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Open the report for “${s.title}” (print / PDF)`}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg text-capelli-navy hover:bg-blue-50"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Report
+                  </a>
+                )}
+                <button
+                  onClick={() => toggle(s.id, !s.isOpen)}
+                  className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg', s.isOpen ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50')}
+                >
+                  {s.isOpen ? <><Lock className="w-3.5 h-3.5" /> Close</> : <><Unlock className="w-3.5 h-3.5" /> Reopen</>}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ItemRow {
+  id: string; type: 'MCQ' | 'WRITTEN'; competency: string; prompt: string;
+  attempts: number; pct: number; flag: 'hard' | 'easy' | null;
+}
+
+function ItemAnalysisPanel() {
+  const [data, setData] = useState<{ items: ItemRow[]; totalAttempts: number } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/exam/admin/item-analysis')
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => { if (ok) setData(d); else setErr(d.error || 'Could not load item analysis'); })
+      .catch(() => setErr('Could not load item analysis'));
+  }, []);
+
+  const hard = data?.items.filter((i) => i.flag === 'hard') ?? [];
+  const easy = data?.items.filter((i) => i.flag === 'easy') ?? [];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-card p-5 space-y-4">
+      <div>
+        <h3 className="font-semibold text-gray-800 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-capelli-navy" /> Item analysis</h3>
+        <p className="text-xs text-gray-500">Across all graded/submitted attempts. <strong>Hard</strong> = ≤40% get it right (training gap or mis-keyed). <strong>Too easy</strong> = ≥95% right (little signal).</p>
+      </div>
+
+      {err && <p className="text-sm text-red-600">{err}</p>}
+      {!data && !err && <div className="p-6 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>}
+
+      {data && data.totalAttempts === 0 && <p className="text-sm text-gray-500">No submitted attempts to analyze yet.</p>}
+
+      {data && data.totalAttempts > 0 && (
+        <>
+          <ItemGroup title={`Hardest questions (${hard.length})`} rows={hard} tone="hard" empty="No questions are failing widely — nice." />
+          <ItemGroup title={`Too easy (${easy.length})`} rows={easy} tone="easy" empty="No questions are trivially easy." />
+        </>
+      )}
+    </div>
+  );
+}
+
+function ItemGroup({ title, rows, tone, empty }: { title: string; rows: ItemRow[]; tone: 'hard' | 'easy'; empty: string }) {
+  return (
+    <div>
+      <h4 className={cn('text-sm font-bold mb-2', tone === 'hard' ? 'text-red-600' : 'text-emerald-600')}>{title}</h4>
+      {rows.length === 0 ? (
+        <p className="text-xs text-gray-400">{empty}</p>
+      ) : (
+        <div className="space-y-1.5">
+          {rows.map((r) => (
+            <div key={r.id} className="flex items-start gap-3 text-sm">
+              <span className={cn('flex-shrink-0 w-12 text-right font-semibold tabular-nums', tone === 'hard' ? 'text-red-600' : 'text-emerald-600')}>{r.pct}%</span>
+              <div className="min-w-0">
+                <p className="text-gray-700 line-clamp-2">{r.prompt}</p>
+                <p className="text-xs text-gray-400">{r.type === 'MCQ' ? 'Multiple choice' : 'Written'} · {r.competency} · {r.attempts} answer{r.attempts === 1 ? '' : 's'}</p>
+              </div>
             </div>
           ))}
         </div>

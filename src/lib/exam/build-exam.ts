@@ -73,3 +73,11 @@ export function passed(totalScore: number, maxScore: number): boolean {
 
 /** Grader/admin roles that may view all attempts and grade written answers. */
 export const GRADER_ROLES = ['ADMIN', 'TEAM_LEADER', 'TRAINER'];
+
+/**
+ * E6 — attempt controls. A member may sit a given exam window at most this many
+ * times, and once they've passed it the window locks for them (their
+ * certification is banked; a re-sit would only risk it). Admins can always open
+ * a fresh window for another go.
+ */
+export const MAX_ATTEMPTS_PER_SESSION = 2;
