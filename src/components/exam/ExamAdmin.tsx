@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles, FileText, BarChart3, Award, Library } from 'lucide-react';
+import { ClipboardList, CheckCircle2, XCircle, Clock, Loader2, ArrowLeft, ShieldCheck, Download, Plus, Lock, Unlock, Sparkles, FileText, BarChart3, Award, Library, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { useToast } from '@/components/ui/use-toast';
@@ -186,6 +186,7 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
   const [grades, setGrades] = useState<Record<string, { awardedPoints: number; graderNote: string }>>({});
   const [saving, setSaving] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   async function aiSuggest() {
     setAiBusy(true);
@@ -220,7 +221,8 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
   const mcq: Resp[] = data.responses.filter((r: Resp) => r.type === 'MCQ');
   const writtenAwarded = Object.values(grades).reduce((s, g) => s + (Number(g.awardedPoints) || 0), 0);
   const projectedTotal = (data.autoScore ?? 0) + writtenAwarded;
-  const readOnly = data.status === 'GRADED';
+  const isGraded = data.status === 'GRADED';
+  const readOnly = isGraded && !editing;
 
   async function save() {
     setSaving(true);
@@ -246,13 +248,24 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
               Multiple choice (auto): <strong className="text-gray-800">{data.autoScore}/{data.autoMax}</strong> · Written max {data.writtenMax} · Pass mark 80%
             </p>
           </div>
-          {!readOnly && (
+          {isGraded && !editing ? (
+            <Button onClick={() => setEditing(true)} variant="outline" className="gap-1.5 flex-shrink-0">
+              <Pencil className="w-4 h-4 text-capelli-navy" /> Adjust grade
+            </Button>
+          ) : (
             <Button onClick={aiSuggest} disabled={aiBusy} variant="outline" className="gap-1.5 flex-shrink-0">
               {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-capelli-navy" />}
               Suggest scores with AI
             </Button>
           )}
         </div>
+        {isGraded && (
+          <p className={cn('text-xs mt-2', editing ? 'text-amber-600' : 'text-gray-400')}>
+            {editing
+              ? 'Editing a finalized grade — saving overwrites the current score and pass/fail.'
+              : `Finalized: ${data.totalScore}/${data.maxScore} · ${data.passed ? 'PASS' : 'FAIL'}. Use “Adjust grade” to change the marks.`}
+          </p>
+        )}
       </div>
 
       {Array.isArray(data.breakdown) && data.breakdown.length > 0 && (
@@ -331,10 +344,15 @@ function GradePanel({ attemptId, onBack }: { attemptId: string; onBack: () => vo
         <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 backdrop-blur px-6 py-3">
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
             <span className="text-sm text-gray-500">Projected total: <strong className="text-gray-800">{projectedTotal}/{data.maxScore}</strong></span>
-            <Button onClick={save} disabled={saving} className="gap-2 bg-capelli-navy hover:bg-blue-900">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Finalize grade
-            </Button>
+            <div className="flex items-center gap-2">
+              {isGraded && editing && (
+                <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancel</Button>
+              )}
+              <Button onClick={save} disabled={saving} className="gap-2 bg-capelli-navy hover:bg-blue-900">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {isGraded ? 'Save changes' : 'Finalize grade'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
