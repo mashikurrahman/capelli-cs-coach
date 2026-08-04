@@ -93,6 +93,11 @@ const MANIFEST: ManifestEntry[] = [
     title: 'Product Development Directory',
     category: 'PRODUCT_GUIDE',
   },
+  {
+    filePath: path.join(KNOWLEDGE, 'fbb-fbpa-ro-field-guide.md'),
+    title: 'FBB / FBPA / RO — CS Field Guide',
+    category: 'CHEAT_SHEET',
+  },
 ];
 
 // ─── Embedding helpers ─────────────────────────────────────────────────────────
