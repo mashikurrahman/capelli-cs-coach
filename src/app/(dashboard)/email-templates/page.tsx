@@ -13,6 +13,7 @@ export default async function EmailTemplatesPage() {
       id: true,
       name: true,
       category: true,
+      complaints: true,
       keywords: true,
       placeholders: true,
     },

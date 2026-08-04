@@ -290,6 +290,7 @@ model Template {
   name         String
   type         TemplateType
   category     String?
+  complaints   String[]      // complaint-type buckets this email is filed under (a template can serve several)
   keywords     String[]
   subject      String?
   body         String

@@ -15,7 +15,7 @@ for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
 }
 
-import { EMAIL_TEMPLATES } from '../src/lib/templates/email-templates';
+import { EMAIL_TEMPLATES, complaintsFor } from '../src/lib/templates/email-templates';
 
 const prisma = new PrismaClient();
 
@@ -39,12 +39,13 @@ async function main() {
   let i = 0;
   for (const t of EMAIL_TEMPLATES) {
     const placeholders = extractPlaceholders(t.body);
+    const complaints = complaintsFor(t.key);
     await prisma.$executeRaw`
       INSERT INTO templates
-        (id, name, type, category, keywords, subject, body, placeholders, "isOfficial", "sortOrder", status, version, "createdAt", "updatedAt")
+        (id, name, type, category, complaints, keywords, subject, body, placeholders, "isOfficial", "sortOrder", status, version, "createdAt", "updatedAt")
       VALUES (
         ${randomUUID()}, ${t.name}, 'CUSTOMER_EMAIL'::"TemplateType", ${t.category},
-        ${pgArray(t.keywords)}, ${t.subject ?? null}, ${t.body}, ${pgArray(placeholders)},
+        ${pgArray(complaints)}, ${pgArray(t.keywords)}, ${t.subject ?? null}, ${t.body}, ${pgArray(placeholders)},
         true, ${i}, 'APPROVED'::"WorkflowStatus", 1, NOW(), NOW()
       )
     `;
@@ -52,11 +53,11 @@ async function main() {
   }
   console.log(`Inserted ${i} official templates.`);
 
-  const byCat = await prisma.$queryRaw<Array<{ category: string; n: bigint }>>`
-    SELECT category, COUNT(*)::bigint AS n FROM templates GROUP BY category ORDER BY category
+  const byComplaint = await prisma.$queryRaw<Array<{ complaint: string; n: bigint }>>`
+    SELECT UNNEST(complaints) AS complaint, COUNT(*)::bigint AS n FROM templates GROUP BY complaint ORDER BY complaint
   `;
-  console.log('\nBy category:');
-  for (const r of byCat) console.log(`  ${r.category}: ${Number(r.n)}`);
+  console.log('\nBy complaint:');
+  for (const r of byComplaint) console.log(`  ${r.complaint}: ${Number(r.n)}`);
 }
 
 main()

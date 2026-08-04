@@ -33,6 +33,107 @@ export const EMAIL_CATEGORIES = [
   'General / Policy',
 ] as const;
 
+/**
+ * Complaint-type buckets — how an agent thinks about a ticket ("wrong item",
+ * "where's my order?"). Templates are browsed by these. A single email can serve
+ * several complaints (e.g. the evidence-picture request covers wrong item,
+ * decoration issue, and damaged), so a template lists all the complaints it fits.
+ * Order here is the order shown in the UI.
+ */
+export const COMPLAINT_CATEGORIES = [
+  'Wrong Item',
+  'Missing Item',
+  'Decoration Issue',
+  'Damaged / Defective',
+  'Delivery & Tracking',
+  'Processing Time / ETA',
+  'Out of Stock',
+  'Return / Exchange',
+  'Cancellation / Refund',
+  'Ordering & Sizing Help',
+  'Account & Login',
+  'Links & Access',
+  'Discounts & Promotions',
+  'General / Policy',
+] as const;
+
+export type ComplaintCategory = typeof COMPLAINT_CATEGORIES[number];
+
+/** template key → the complaint buckets it should appear under. */
+export const TEMPLATE_COMPLAINTS: Record<string, ComplaintCategory[]> = {
+  // Returns & cancellations
+  return_exchange_policy: ['Return / Exchange'],
+  cancel_order_bc: ['Cancellation / Refund'],
+  cancel_item_bc: ['Cancellation / Refund'],
+  refund_shipping_bc: ['Cancellation / Refund'],
+  cancel_order_shopify: ['Cancellation / Refund'],
+  cancel_item_shopify: ['Cancellation / Refund'],
+  // Shipping / delivery / missing
+  order_shipped: ['Delivery & Tracking'],
+  order_partially_shipped: ['Missing Item', 'Delivery & Tracking'],
+  remaining_items_shipped: ['Missing Item', 'Delivery & Tracking'],
+  mixed_order_single: ['Missing Item', 'Delivery & Tracking'],
+  mixed_order_multiple: ['Missing Item', 'Delivery & Tracking'],
+  inform_ship_date: ['Delivery & Tracking', 'Processing Time / ETA'],
+  confirm_shipping_address: ['Delivery & Tracking'],
+  // Replacements (serve wrong / decoration / damaged) + shipped notice
+  replacement_shipped: ['Wrong Item', 'Decoration Issue', 'Damaged / Defective', 'Delivery & Tracking'],
+  fbb_tracking_shipped: ['Delivery & Tracking', 'Wrong Item', 'Decoration Issue', 'Damaged / Defective'],
+  defective_request_evidence: ['Wrong Item', 'Decoration Issue', 'Damaged / Defective'],
+  replacement_notification: ['Wrong Item', 'Decoration Issue', 'Damaged / Defective'],
+  // Processing time / ETA
+  processing_majority: ['Processing Time / ETA', 'Delivery & Tracking'],
+  processing_cscom: ['Processing Time / ETA'],
+  processing_referee: ['Processing Time / ETA'],
+  processing_real_coast: ['Processing Time / ETA'],
+  expedited_shipping: ['Processing Time / ETA'],
+  eta_followup: ['Processing Time / ETA', 'Delivery & Tracking'],
+  // Out of stock
+  oos_basic: ['Out of Stock'],
+  oos_cancel_or_wait: ['Out of Stock'],
+  oos_alt_size: ['Out of Stock'],
+  oos_alt_color: ['Out of Stock'],
+  oos_two_options: ['Out of Stock'],
+  oos_alt_size_shipped: ['Out of Stock'],
+  oos_replenish_to_order: ['Out of Stock'],
+  item_replenished: ['Out of Stock'],
+  item_not_available: ['Out of Stock'],
+  zero_pick: ['Out of Stock'],
+  // Ordering & sizing help
+  add_items_existing_order: ['Ordering & Sizing Help'],
+  size_help_child: ['Ordering & Sizing Help'],
+  individual_item: ['Ordering & Sizing Help'],
+  individual_item_exempt: ['Ordering & Sizing Help'],
+  order_two_players: ['Ordering & Sizing Help'],
+  place_order_phone: ['Ordering & Sizing Help'],
+  apply_patches: ['Decoration Issue', 'Ordering & Sizing Help'],
+  tax_shipping_rates: ['Ordering & Sizing Help'],
+  // Account & login
+  create_account_individual: ['Account & Login'],
+  create_account_link_guest: ['Account & Login'],
+  // Links & access
+  player_link_in_db: ['Links & Access'],
+  player_link_not_in_db: ['Links & Access'],
+  club_link: ['Links & Access'],
+  international_shipping: ['Links & Access', 'Ordering & Sizing Help'],
+  european_clubs: ['Links & Access'],
+  // Discounts & promotions
+  military_request_proof: ['Discounts & Promotions'],
+  military_advise: ['Discounts & Promotions'],
+  military_refund: ['Discounts & Promotions', 'Cancellation / Refund'],
+  gift_certificate: ['Discounts & Promotions'],
+  no_discount_code: ['Discounts & Promotions'],
+  // General / policy
+  job_opportunity: ['General / Policy'],
+  store_hours: ['General / Policy'],
+  closing_ticket_followups: ['General / Policy'],
+};
+
+/** Complaints for a template key (falls back to General / Policy if unmapped). */
+export function complaintsFor(key: string): ComplaintCategory[] {
+  return TEMPLATE_COMPLAINTS[key] ?? ['General / Policy'];
+}
+
 export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
   // ─── Returns & Exchanges ───────────────────────────────────────────────
   {
